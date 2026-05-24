@@ -1,0 +1,13 @@
+tracker_type: bytetrack
+
+# Detection thresholds
+track_high_thresh: 0.5    # high-confidence detections → directly matched to tracks
+track_low_thresh: 0.1     # low-confidence detections → second-round matching (rescue lost tracks)
+new_track_thresh: 0.6     # minimum confidence to initialize a new track
+
+# Track management
+track_buffer: 30          # frames to keep a lost track alive before dropping it (30 ≈ 1s at 30fps)
+match_thresh: 0.8         # IoU threshold for Hungarian matching; lower = stricter
+
+# Score fusion
+fuse_score: true          # multiply IoU similarity with detection confidence when matching

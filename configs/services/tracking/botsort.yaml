@@ -1,0 +1,23 @@
+tracker_type: botsort
+
+# Detection thresholds
+track_high_thresh: 0.5
+track_low_thresh: 0.1
+new_track_thresh: 0.6
+
+# Track management
+track_buffer: 30          # frames to keep a lost track alive before dropping (30 ≈ 1s at 30fps)
+match_thresh: 0.7         # slightly looser than ByteTrack — BoT-SORT compensates via camera motion
+
+# Score fusion
+fuse_score: true
+
+# Camera motion compensation (GMC)
+# BoT-SORT re-aligns detection boxes using global motion before matching.
+# This reduces ID switches when the camera pans or shakes.
+proximity_thresh: 0.5     # minimum IoU to consider two boxes as spatially close
+appearance_thresh: 0.25   # cosine distance threshold for ReID matching (used when with_reid: true)
+
+# ReID — set to true only if a ReID model is available; adds latency
+with_reid: false
+model: auto               # ReID model path; "auto" uses BoT-SORT default when with_reid: true

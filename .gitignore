@@ -1,0 +1,20 @@
+# Virtual environment
+ev/
+
+# Model weight files
+*.pth
+*.pt
+*.pkl
+*.onnx
+*.bin
+*.weights
+*.h5
+
+# Data folder contents
+**/data/**
+
+# Memory file
+mem.md
+
+# Keep folder structure tracked (place .gitkeep inside folders to track them)
+!**/.gitkeep
