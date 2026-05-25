@@ -1,0 +1,236 @@
+<mxfile host="app.diagrams.net" modified="2026-05-22" agent="Claude" version="21.0.0">
+  <diagram id="eduvision-pipeline" name="EduVision System Pipeline">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== TITLE ===== -->
+        <mxCell id="title" value="EduVision — Hệ thống Giám sát Lớp học Thông minh" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="10" width="1000" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ROW 1: INPUT → VIDEO PROCESSING → ANALYSIS ===== -->
+
+        <!-- INPUT -->
+        <mxCell id="bg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EBF3FB;strokeColor=#6c8ebf;opacity=50;" vertex="1" parent="1">
+          <mxGeometry x="20" y="60" width="320" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl1" value="INPUT" style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="26" y="63" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cam1" value="📷 Camera 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="45" y="95" width="80" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="cam2" value="📷 Camera 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="145" y="95" width="80" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="camN" value="📷 Camera N" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="245" y="95" width="80" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="vstream" value="Video Stream" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="115" y="200" width="130" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_c1vs" value="" edge="1" source="cam1" target="vstream" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_c2vs" value="" edge="1" source="cam2" target="vstream" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cNvs" value="" edge="1" source="camN" target="vstream" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- VIDEO PROCESSING -->
+        <mxCell id="bg2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF5EB;strokeColor=#d79b00;opacity=50;" vertex="1" parent="1">
+          <mxGeometry x="360" y="60" width="400" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl2" value="VIDEO PROCESSING" style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#d79b00;align=left;" vertex="1" parent="1">
+          <mxGeometry x="366" y="63" width="150" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="frm" value="🎬 Video Ingestion &amp; Frame Extraction" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="80" width="360" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="objdet" value="🔍 Person Det. &amp; Tracking (YOLO)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="375" y="140" width="180" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="facerec" value="👤 Face Recognition Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="565" y="140" width="180" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="poseest" value="🤸 Pose Estimation (YOLO-pose)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="375" y="205" width="115" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="headpose" value="👀 Head Pose &amp; Gaze (MediaPipe)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="205" width="120" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="offtaskdet" value="📱 Off-task Object Det (YOLO)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="630" y="205" width="115" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_vsfrm" value="" edge="1" source="vstream" target="frm" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frmobj" value="" edge="1" source="frm" target="objdet" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frmfac" value="" edge="1" source="frm" target="facerec" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frmpose" value="" edge="1" source="frm" target="poseest" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frmhead" value="" edge="1" source="frm" target="headpose" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frmoff" value="" edge="1" source="frm" target="offtaskdet" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ANALYSIS -->
+        <mxCell id="bg3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4EEF8;strokeColor=#9673a6;opacity=50;" vertex="1" parent="1">
+          <mxGeometry x="780" y="60" width="460" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl3" value="ANALYSIS" style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#9673a6;align=left;" vertex="1" parent="1">
+          <mxGeometry x="786" y="63" width="70" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="att" value="✅ Điểm danh Thông minh&#xa;(có mặt / vắng / trễ)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="800" y="95" width="195" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="loc" value="📍 Theo dõi Vị trí&#xa;Thời gian thực&#xa;(phát hiện rời khỏi chỗ)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="95" width="195" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="stu" value="🧠 Phân tích Trạng thái SV&#xa;(tập trung / buồn ngủ...)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="800" y="200" width="195" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="lec" value="👨‍🏫 Giám sát Giảng viên&#xa;(giảng / tương tác / vắng)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="200" width="195" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_facatt" value="" edge="1" source="facerec" target="att" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_objloc" value="" edge="1" source="objdet" target="loc" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_objstu" value="" edge="1" source="objdet" target="stu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_objlec" value="" edge="1" source="objdet" target="lec" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_posestu" value="" edge="1" source="poseest" target="stu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_headstu" value="" edge="1" source="headpose" target="stu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_offstu" value="" edge="1" source="offtaskdet" target="stu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ROW 2: STORAGE → AI/LLM → OUTPUT → Users ===== -->
+
+        <!-- STORAGE -->
+        <mxCell id="bg4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;opacity=50;" vertex="1" parent="1">
+          <mxGeometry x="20" y="380" width="200" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl4" value="BACKEND &amp; STORAGE" style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#666666;align=left;" vertex="1" parent="1">
+          <mxGeometry x="26" y="383" width="150" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="backendapi" value="🔌 Backend API&#xa;(FastAPI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="410" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="🗄️ Database (CSDL)&#xa;(PostgreSQL / SQLite)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="505" width="150" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_attdb" value="" edge="1" source="att" target="backendapi" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_locdb" value="" edge="1" source="loc" target="backendapi" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_studb" value="" edge="1" source="stu" target="backendapi" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lecdb" value="" edge="1" source="lec" target="backendapi" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_apidb" value="" edge="1" source="backendapi" target="db" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AI / LLM -->
+        <mxCell id="bg5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#d6b656;opacity=50;" vertex="1" parent="1">
+          <mxGeometry x="240" y="380" width="380" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl5" value="AI / LLM" style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#d6b656;align=left;" vertex="1" parent="1">
+          <mxGeometry x="246" y="383" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="llm" value="🤖 LLM Analysis Engine&#xa;(tổng hợp → nhận định chất lượng lớp học)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="270" y="420" width="320" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_dbllm" value="" edge="1" source="db" target="llm" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- OUTPUT -->
+        <mxCell id="bg6" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ECF5EC;strokeColor=#82b366;opacity=50;" vertex="1" parent="1">
+          <mxGeometry x="640" y="380" width="480" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl6" value="OUTPUT" style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#82b366;align=left;" vertex="1" parent="1">
+          <mxGeometry x="646" y="383" width="70" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rpt" value="📄 Report Generation&#xa;(Báo cáo PDF / Dashboard)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="420" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="web" value="🖥️ Cổng Thông tin Quản lý&#xa;(Web Frontend)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="880" y="420" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_llmrpt" value="" edge="1" source="llm" target="rpt" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_llmweb" value="" edge="1" source="llm" target="web" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- USERS -->
+        <mxCell id="u1" value="👤 Sinh viên" style="shape=mxgraph.basic.person2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1145" y="400" width="45" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="u2" value="👨‍🏫 Giảng viên" style="shape=mxgraph.basic.person2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1205" y="400" width="45" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="u3" value="🏫 Nhà trường" style="shape=mxgraph.basic.person2;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1145" y="495" width="45" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="u4" value="🏢 Phòng QL" style="shape=mxgraph.basic.person2;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1205" y="495" width="45" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_webu1" value="" edge="1" source="web" target="u1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_webu2" value="" edge="1" source="web" target="u2" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rptu3" value="" edge="1" source="rpt" target="u3" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rptu4" value="" edge="1" source="rpt" target="u4" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
