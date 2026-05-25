@@ -32,46 +32,8 @@ EduVision is an AI-powered classroom monitoring pipeline built for higher educat
 
 ## 4. System Architecture
 
-```mermaid
-flowchart TD
-    CAM["IP Camera / Video File"]
-    VC["Video Connection"]
-    CAM --> VC
-
-    subgraph VA["Vision AI Service"]
-        direction TB
-        PD["1. Person Detection\nyolo11n · yolo11s"]
-        MOT["2. Multi-object Tracking\nByteTrack · BoT-SORT"]
-        FD["3. Face Detection\nSCRFD · RetinaFace"]
-        FR["4. Face Recognition / Attendance\nbuffalo_s · buffalo_l · ArcFace"]
-        PE["5. Pose Estimation\nyolo11n-pose · yolo11s-pose"]
-        HP["6. Head Pose / Gaze\nMediaPipe+solvePnP · 6DRepNet"]
-        OD["7. Object Detection — off-task\nphone · laptop · tablet · book\npen · earphone · food · bottle"]
-        BA["8. Behavior Analysis\nRule-based Temporal Logic\nfocused · drowsy · using_phone\noff_task · away · side_talking"]
-
-        PD --> MOT
-        MOT --> FD
-        MOT --> PE
-        FD --> FR
-        PE --> HP
-        HP --> OD
-        FR --> BA
-        OD --> BA
-    end
-
-    VC --> VA
-
-    BA --> API
-
-    subgraph BACK["Backend"]
-        API["Backend API\nFastAPI + PostgreSQL"]
-        RG["Report Generator\nGemini · GPT"]
-        API --> RG
-    end
-
-    API --> FE["Web Dashboard\nREST API · WebSocket · Notifications"]
-    RG  --> FE
-```
+![System Architecture](docs/DPL.drawio.png)
+*(Detailed version in [DPL.drawio.pdf](docs/DPL.drawio.pdf))*
 
 The system is organized as **independent microservices** that communicate via REST API or message queues:
 
