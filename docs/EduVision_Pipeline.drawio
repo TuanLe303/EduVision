@@ -183,30 +183,56 @@
           <mxGeometry x="605" y="575" width="90" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_rfatt" value="" edge="1" source="facerec" target="att" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_rfatt" value="" edge="1" source="facerec" target="att" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="400" y="440" />
+              <mxPoint x="610" y="440" />
+              <mxPoint x="610" y="480" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="e_odstu" value="" edge="1" source="offtaskdet" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_motloc" value="" edge="1" source="tracking" target="loc" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_motloc" value="" edge="1" source="tracking" target="loc" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="540" y="330" />
+              <mxPoint x="540" y="260" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_motlec" value="" edge="1" source="tracking" target="lec" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_motlec" value="" edge="1" source="tracking" target="lec" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="530" y="330" />
+              <mxPoint x="530" y="185" />
+              <mxPoint x="700" y="185" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- ===== ANALYSIS TO BACKEND BUS CONNECTION ===== -->
         <mxCell id="bus_line" value="" style="endArrow=none;html=1;strokeColor=#666666;strokeWidth=3;" edge="1" parent="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="760" y="550" as="sourcePoint" />
-            <mxPoint x="760" y="260" as="targetPoint" />
+            <mxPoint x="760" y="205" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="e_locbus" value="" edge="1" parent="1" source="loc" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=none;">
+        <mxCell id="e_locbus" value="" edge="1" parent="1" source="loc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=none;">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="760" y="260" as="targetPoint" />
+            <mxPoint x="760" y="205" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="600" y="205" />
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e_lecbus" value="" edge="1" parent="1" source="lec" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=none;">
@@ -225,10 +251,14 @@
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="e_busapi" value="" edge="1" parent="1" style="strokeColor=#666666;strokeWidth=3;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_busapi" value="" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#666666;strokeWidth=3;fillColor=none;endArrow=block;endFill=1;">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="760" y="380" as="sourcePoint" />
-            <mxPoint x="880" y="290" as="targetPoint" />
+            <mxPoint x="880" y="285" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="840" y="380" />
+              <mxPoint x="840" y="285" />
+            </Array>
           </mxGeometry>
         </mxCell>
 
@@ -273,8 +303,16 @@
           <mxGeometry x="1080" y="382" width="120" height="25" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_dbllm" value="" edge="1" source="db" target="llm" parent="1" style="strokeColor=#d6b656;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_dbllm" value="" edge="1" source="db" target="llm" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#d6b656;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="905" y="490" />
+              <mxPoint x="1025" y="490" />
+              <mxPoint x="1025" y="350" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- ===== COLUMN 6: OUTPUT ===== -->
@@ -299,11 +337,25 @@
           <mxGeometry x="1315" y="422" width="100" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_llmweb" value="" edge="1" source="llm" target="web" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_llmweb" value="" edge="1" source="llm" target="web" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1255" y="350" />
+              <mxPoint x="1255" y="235" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_llmrpt" value="" edge="1" source="llm" target="rpt" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_llmrpt" value="" edge="1" source="llm" target="rpt" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1255" y="350" />
+              <mxPoint x="1255" y="395" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- ===== COLUMN 7: USERS (Far Right) ===== -->
@@ -335,17 +387,39 @@
           <mxGeometry x="1555" y="392" width="80" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_webu1" value="" edge="1" source="web" target="u1" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_webu1" value="" edge="1" source="web" target="u1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_webu2" value="" edge="1" source="web" target="u2" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_webu2" value="" edge="1" source="web" target="u2" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1485" y="235" />
+              <mxPoint x="1485" y="175" />
+              <mxPoint x="1595" y="175" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_rptu3" value="" edge="1" source="rpt" target="u3" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_rptu3" value="" edge="1" source="rpt" target="u3" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_rptu4" value="" edge="1" source="rpt" target="u4" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="e_rptu4" value="" edge="1" source="rpt" target="u4" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1485" y="395" />
+              <mxPoint x="1485" y="325" />
+              <mxPoint x="1595" y="325" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
       </root>
