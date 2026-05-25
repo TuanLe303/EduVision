@@ -10,9 +10,7 @@
           <mxGeometry x="100" y="40" width="1454" height="35" as="geometry" />
         </mxCell>
 
-        <!-- ===== SINGLE ROW LAYOUT: COLUMN 1 TO 7 ===== -->
-
-        <!-- COLUMN 1: INPUT -->
+        <!-- ===== COLUMN 1: INPUT ===== -->
         <mxCell id="bg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EBF3FB;strokeColor=#6c8ebf;opacity=50;" vertex="1" parent="1">
           <mxGeometry x="20" y="150" width="200" height="450" as="geometry" />
         </mxCell>
@@ -24,21 +22,21 @@
           <mxGeometry x="45" y="190" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lbl_cam1" value="Camera 1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="20" y="230" width="90" height="20" as="geometry" />
+          <mxGeometry x="20" y="165" width="90" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="cam2" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv.png;" vertex="1" parent="1">
           <mxGeometry x="45" y="270" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lbl_cam2" value="Camera 2" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="20" y="310" width="90" height="20" as="geometry" />
+          <mxGeometry x="20" y="245" width="90" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="camN" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv.png;" vertex="1" parent="1">
           <mxGeometry x="45" y="350" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lbl_camN" value="Camera N" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="20" y="390" width="90" height="20" as="geometry" />
+          <mxGeometry x="20" y="325" width="90" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="vstream" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/video-playlist.png;" vertex="1" parent="1">
@@ -58,7 +56,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- COLUMN 2: VIDEO PROCESSING -->
+        <!-- ===== COLUMN 2: VIDEO PROCESSING ===== -->
         <mxCell id="bg2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF5EB;strokeColor=#d79b00;opacity=50;" vertex="1" parent="1">
           <mxGeometry x="250" y="150" width="250" height="450" as="geometry" />
         </mxCell>
@@ -67,61 +65,61 @@
         </mxCell>
 
         <mxCell id="frm" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/processor.png;" vertex="1" parent="1">
-          <mxGeometry x="350" y="170" width="50" height="50" as="geometry" />
+          <mxGeometry x="300" y="170" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_frm" value="Frame Extraction" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="325" y="222" width="100" height="20" as="geometry" />
+        <mxCell id="lbl_frm" value="Frame Extraction" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="180" width="120" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="persondet" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/gender-neutral-user.png;" vertex="1" parent="1">
-          <mxGeometry x="350" y="245" width="50" height="50" as="geometry" />
+          <mxGeometry x="300" y="240" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_persondet" value="Person Detection" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="325" y="297" width="100" height="20" as="geometry" />
+        <mxCell id="lbl_persondet" value="Person Detection" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="250" width="120" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="tracking" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/user-location.png;" vertex="1" parent="1">
-          <mxGeometry x="350" y="320" width="50" height="50" as="geometry" />
+          <mxGeometry x="300" y="310" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_tracking" value="Multi-Obj Tracking" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="325" y="372" width="100" height="20" as="geometry" />
+        <mxCell id="lbl_tracking" value="Multi-Obj Tracking" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="320" width="120" height="20" as="geometry" />
         </mxCell>
 
         <!-- Left Branch (Face) -->
         <mxCell id="facedet" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/face-id.png;" vertex="1" parent="1">
-          <mxGeometry x="300" y="395" width="40" height="40" as="geometry" />
+          <mxGeometry x="270" y="385" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_facedet" value="Face Detection" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="275" y="437" width="90" height="20" as="geometry" />
+        <mxCell id="lbl_facedet" value="Face Detection" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="190" y="395" width="75" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="facerec" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/find-user.png;" vertex="1" parent="1">
-          <mxGeometry x="300" y="470" width="40" height="40" as="geometry" />
+          <mxGeometry x="270" y="460" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_facerec" value="Face Recognition" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="275" y="512" width="90" height="20" as="geometry" />
+        <mxCell id="lbl_facerec" value="Face Recognition" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="180" y="470" width="85" height="20" as="geometry" />
         </mxCell>
 
         <!-- Right Branch (Pose & Gaze & Object) -->
         <mxCell id="poseest" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/yoga.png;" vertex="1" parent="1">
-          <mxGeometry x="415" y="395" width="40" height="40" as="geometry" />
+          <mxGeometry x="380" y="385" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_poseest" value="Pose Estimation" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="390" y="437" width="90" height="20" as="geometry" />
+        <mxCell id="lbl_poseest" value="Pose Estimation" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="430" y="395" width="65" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="headpose" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/eye.png;" vertex="1" parent="1">
-          <mxGeometry x="415" y="470" width="40" height="40" as="geometry" />
+          <mxGeometry x="380" y="460" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_headpose" value="Head Gaze" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="390" y="512" width="90" height="20" as="geometry" />
+        <mxCell id="lbl_headpose" value="Head Gaze" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="430" y="470" width="65" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="offtaskdet" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/smartphone.png;" vertex="1" parent="1">
-          <mxGeometry x="415" y="540" width="40" height="40" as="geometry" />
+          <mxGeometry x="380" y="530" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_offtaskdet" value="Off-task Obj Det" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="390" y="582" width="90" height="20" as="geometry" />
+        <mxCell id="lbl_offtaskdet" value="Off-task Obj Det" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="430" y="540" width="65" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="e_vsfrm" value="" edge="1" source="vstream" target="frm" parent="1" style="strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
@@ -149,7 +147,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- COLUMN 3: ANALYSIS -->
+        <!-- ===== COLUMN 3: ANALYSIS ===== -->
         <mxCell id="bg3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4EEF8;strokeColor=#9673a6;opacity=50;" vertex="1" parent="1">
           <mxGeometry x="530" y="150" width="250" height="450" as="geometry" />
         </mxCell>
@@ -172,17 +170,17 @@
         </mxCell>
 
         <mxCell id="att" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/checkmark.png;" vertex="1" parent="1">
-          <mxGeometry x="630" y="350" width="40" height="40" as="geometry" />
+          <mxGeometry x="575" y="350" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lbl_att" value="Điểm danh" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="605" y="392" width="90" height="20" as="geometry" />
+          <mxGeometry x="550" y="392" width="90" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="stu" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/brain.png;" vertex="1" parent="1">
-          <mxGeometry x="630" y="470" width="40" height="40" as="geometry" />
+          <mxGeometry x="575" y="470" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lbl_stu" value="Trạng thái SV" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="605" y="512" width="90" height="20" as="geometry" />
+          <mxGeometry x="550" y="512" width="90" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="e_rfatt" value="" edge="1" source="facerec" target="att" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
@@ -198,7 +196,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- COLUMN 4: BACKEND & STORAGE -->
+        <!-- ===== COLUMN 4: BACKEND & STORAGE ===== -->
         <mxCell id="bg4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;opacity=50;" vertex="1" parent="1">
           <mxGeometry x="810" y="150" width="200" height="450" as="geometry" />
         </mxCell>
@@ -209,15 +207,15 @@
         <mxCell id="backendapi" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/api.png;" vertex="1" parent="1">
           <mxGeometry x="880" y="260" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_backendapi" value="Backend API (FastAPI)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="850" y="312" width="110" height="20" as="geometry" />
+        <mxCell id="lbl_backendapi" value="Backend API (FastAPI)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="935" y="275" width="120" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="db" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/database.png;" vertex="1" parent="1">
           <mxGeometry x="880" y="420" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_db" value="Database" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="855" y="472" width="100" height="20" as="geometry" />
+        <mxCell id="lbl_db" value="Database" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="935" y="435" width="80" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="e_attdb" value="" edge="1" source="att" target="backendapi" parent="1" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
@@ -236,7 +234,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- COLUMN 5: AI / LLM -->
+        <!-- ===== COLUMN 5: AI / LLM ===== -->
         <mxCell id="bg5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#d6b656;opacity=50;" vertex="1" parent="1">
           <mxGeometry x="1040" y="150" width="200" height="450" as="geometry" />
         </mxCell>
@@ -255,7 +253,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- COLUMN 6: OUTPUT -->
+        <!-- ===== COLUMN 6: OUTPUT ===== -->
         <mxCell id="bg6" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ECF5EC;strokeColor=#82b366;opacity=50;" vertex="1" parent="1">
           <mxGeometry x="1270" y="150" width="200" height="450" as="geometry" />
         </mxCell>
@@ -284,7 +282,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- COLUMN 7: USERS (Far Right) -->
+        <!-- ===== COLUMN 7: USERS (Far Right) ===== -->
         <mxCell id="u1" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/student-male.png;" vertex="1" parent="1">
           <mxGeometry x="1510" y="200" width="40" height="40" as="geometry" />
         </mxCell>
