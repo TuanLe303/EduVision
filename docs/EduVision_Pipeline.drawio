@@ -10,7 +10,7 @@
           <mxGeometry x="100" y="40" width="1454" height="35" as="geometry" />
         </mxCell>
 
-        <!-- ===== ROW 1: INPUT → VIDEO PROCESSING → ANALYSIS → BACKEND → LLM → OUTPUT → Users ===== -->
+        <!-- ===== SINGLE ROW LAYOUT: COLUMN 1 TO 7 ===== -->
 
         <!-- COLUMN 1: INPUT -->
         <mxCell id="bg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EBF3FB;strokeColor=#6c8ebf;opacity=50;" vertex="1" parent="1">
@@ -20,26 +20,26 @@
           <mxGeometry x="26" y="153" width="60" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="cam1" value="Camera 1" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv-camera.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="95" y="190" width="50" height="50" as="geometry" />
+        <mxCell id="cam1" value="Camera 1" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="45" y="200" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="cam2" value="Camera 2" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv-camera.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="95" y="270" width="50" height="50" as="geometry" />
+        <mxCell id="cam2" value="Camera 2" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="45" y="280" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="camN" value="Camera N" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv-camera.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="95" y="350" width="50" height="50" as="geometry" />
+        <mxCell id="camN" value="Camera N" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/cctv.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="45" y="360" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="vstream" value="Video Stream" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/video-playlist.png;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="90" y="470" width="60" height="60" as="geometry" />
+          <mxGeometry x="140" y="270" width="60" height="60" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_c1vs" value="" edge="1" source="cam1" target="vstream" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_c1vs" value="" edge="1" source="cam1" target="vstream" parent="1" style="strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_c2vs" value="" edge="1" source="cam2" target="vstream" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_c2vs" value="" edge="1" source="cam2" target="vstream" parent="1" style="strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_cNvs" value="" edge="1" source="camN" target="vstream" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_cNvs" value="" edge="1" source="camN" target="vstream" parent="1" style="strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -52,40 +52,40 @@
         </mxCell>
 
         <mxCell id="frm" value="Frame Extraction" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/processor.png;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="345" y="185" width="60" height="60" as="geometry" />
+          <mxGeometry x="345" y="170" width="60" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="poseest" value="Pose Estimation" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/body-pose.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="280" y="295" width="50" height="50" as="geometry" />
+        <mxCell id="facerec" value="Face Recognition" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/face-id.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="240" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="facerec" value="Face Recognition" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/face-recognition.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="385" y="295" width="50" height="50" as="geometry" />
+        <mxCell id="poseest" value="Pose Estimation" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/yoga.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="310" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="headpose" value="Head Gaze" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/gaze.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="280" y="385" width="50" height="50" as="geometry" />
+        <mxCell id="headpose" value="Head Gaze" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/eye.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="380" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="offtaskdet" value="Off-task Obj Det" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/smartphone.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="385" y="385" width="50" height="50" as="geometry" />
+          <mxGeometry x="350" y="450" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="objdet" value="Person Tracking" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/user-location.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="345" y="475" width="50" height="50" as="geometry" />
+          <mxGeometry x="350" y="520" width="50" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_vsfrm" value="" edge="1" source="vstream" target="frm" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_vsfrm" value="" edge="1" source="vstream" target="frm" parent="1" style="strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmpose" value="" edge="1" source="frm" target="poseest" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_frmfac" value="" edge="1" source="frm" target="facerec" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmfac" value="" edge="1" source="frm" target="facerec" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_frmpose" value="" edge="1" source="frm" target="poseest" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmhead" value="" edge="1" source="frm" target="headpose" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_frmhead" value="" edge="1" source="frm" target="headpose" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmoff" value="" edge="1" source="frm" target="offtaskdet" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_frmoff" value="" edge="1" source="frm" target="offtaskdet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmobj" value="" edge="1" source="frm" target="objdet" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_frmobj" value="" edge="1" source="frm" target="objdet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -97,38 +97,38 @@
           <mxGeometry x="536" y="153" width="70" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="att" value="Điểm danh" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/checked-user.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="575" y="210" width="50" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="loc" value="Theo dõi Vị trí" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/map-pin.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="680" y="210" width="50" height="50" as="geometry" />
+        <mxCell id="att" value="Điểm danh" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/checkmark.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="630" y="240" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="stu" value="Trạng thái SV" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/brain.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="575" y="350" width="50" height="50" as="geometry" />
+          <mxGeometry x="630" y="380" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="loc" value="Theo dõi Vị trí" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/map-pin.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="630" y="470" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="lec" value="Giám sát Giảng viên" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/teacher.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="680" y="350" width="50" height="50" as="geometry" />
+          <mxGeometry x="630" y="530" width="50" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_facatt" value="" edge="1" source="facerec" target="att" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_facatt" value="" edge="1" source="facerec" target="att" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_posestu" value="" edge="1" source="poseest" target="stu" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_posestu" value="" edge="1" source="poseest" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_headstu" value="" edge="1" source="headpose" target="stu" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_headstu" value="" edge="1" source="headpose" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_offstu" value="" edge="1" source="offtaskdet" target="stu" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_offstu" value="" edge="1" source="offtaskdet" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_objloc" value="" edge="1" source="objdet" target="loc" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_objloc" value="" edge="1" source="objdet" target="loc" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_objstu" value="" edge="1" source="objdet" target="stu" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_objstu" value="" edge="1" source="objdet" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_objlec" value="" edge="1" source="objdet" target="lec" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_objlec" value="" edge="1" source="objdet" target="lec" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -141,25 +141,25 @@
         </mxCell>
 
         <mxCell id="backendapi" value="Backend API (FastAPI)" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/api.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="880" y="220" width="60" height="60" as="geometry" />
+          <mxGeometry x="880" y="280" width="60" height="60" as="geometry" />
         </mxCell>
         <mxCell id="db" value="Database" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/database.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="880" y="380" width="60" height="60" as="geometry" />
+          <mxGeometry x="880" y="440" width="60" height="60" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_attdb" value="" edge="1" source="att" target="backendapi" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_attdb" value="" edge="1" source="att" target="backendapi" parent="1" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_locdb" value="" edge="1" source="loc" target="backendapi" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_studb" value="" edge="1" source="stu" target="backendapi" parent="1" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_studb" value="" edge="1" source="stu" target="backendapi" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_locdb" value="" edge="1" source="loc" target="backendapi" parent="1" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_lecdb" value="" edge="1" source="lec" target="backendapi" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_lecdb" value="" edge="1" source="lec" target="backendapi" parent="1" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_apidb" value="" edge="1" source="backendapi" target="db" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_apidb" value="" edge="1" source="backendapi" target="db" parent="1" style="strokeColor=#666666;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -172,10 +172,10 @@
         </mxCell>
 
         <mxCell id="llm" value="LLM Engine (Gemini/GPT)" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/robot.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="1110" y="300" width="60" height="60" as="geometry" />
+          <mxGeometry x="1110" y="340" width="60" height="60" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_dbllm" value="" edge="1" source="db" target="llm" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d6b656;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_dbllm" value="" edge="1" source="db" target="llm" parent="1" style="strokeColor=#d6b656;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -194,10 +194,10 @@
           <mxGeometry x="1340" y="370" width="60" height="60" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_llmweb" value="" edge="1" source="llm" target="web" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_llmweb" value="" edge="1" source="llm" target="web" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_llmrpt" value="" edge="1" source="llm" target="rpt" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_llmrpt" value="" edge="1" source="llm" target="rpt" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -215,16 +215,16 @@
           <mxGeometry x="1575" y="360" width="45" height="45" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_webu1" value="" edge="1" source="web" target="u1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_webu1" value="" edge="1" source="web" target="u1" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_webu2" value="" edge="1" source="web" target="u2" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_webu2" value="" edge="1" source="web" target="u2" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_rptu3" value="" edge="1" source="rpt" target="u3" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_rptu3" value="" edge="1" source="rpt" target="u3" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_rptu4" value="" edge="1" source="rpt" target="u4" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fillColor=none;">
+        <mxCell id="e_rptu4" value="" edge="1" source="rpt" target="u4" parent="1" style="strokeColor=#82b366;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
