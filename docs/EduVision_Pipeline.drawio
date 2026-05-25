@@ -51,41 +51,57 @@
           <mxGeometry x="256" y="153" width="150" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="frm" value="Frame Extraction" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/processor.png;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="345" y="170" width="60" height="60" as="geometry" />
+        <mxCell id="frm" value="Frame Extraction" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/processor.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="350" y="170" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="facerec" value="Face Recognition" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/face-id.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="persondet" value="Person Detection" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/gender-neutral-user.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="350" y="240" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="poseest" value="Pose Estimation" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/yoga.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="tracking" value="Multi-Obj Tracking" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/user-location.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="350" y="310" width="50" height="50" as="geometry" />
         </mxCell>
+
+        <!-- Left Branch (Face) -->
+        <mxCell id="facedet" value="Face Detection" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/face-id.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="385" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="facerec" value="Face Recognition" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/find-user.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="460" width="50" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Right Branch (Pose & Gaze & Object) -->
+        <mxCell id="poseest" value="Pose Estimation" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/yoga.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="385" width="50" height="50" as="geometry" />
+        </mxCell>
         <mxCell id="headpose" value="Head Gaze" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/eye.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="350" y="380" width="50" height="50" as="geometry" />
+          <mxGeometry x="400" y="460" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="offtaskdet" value="Off-task Obj Det" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/smartphone.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="350" y="450" width="50" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="objdet" value="Person Tracking" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/user-location.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="350" y="520" width="50" height="50" as="geometry" />
+          <mxGeometry x="400" y="530" width="50" height="50" as="geometry" />
         </mxCell>
 
         <mxCell id="e_vsfrm" value="" edge="1" source="vstream" target="frm" parent="1" style="strokeColor=#6c8ebf;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmfac" value="" edge="1" source="frm" target="facerec" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_frmpd" value="" edge="1" source="frm" target="persondet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmpose" value="" edge="1" source="frm" target="poseest" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_pdmot" value="" edge="1" source="persondet" target="tracking" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmhead" value="" edge="1" source="frm" target="headpose" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_motfd" value="" edge="1" source="tracking" target="facedet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmoff" value="" edge="1" source="frm" target="offtaskdet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_motpe" value="" edge="1" source="tracking" target="poseest" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_frmobj" value="" edge="1" source="frm" target="objdet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_fdrf" value="" edge="1" source="facedet" target="facerec" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pehp" value="" edge="1" source="poseest" target="headpose" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hpod" value="" edge="1" source="headpose" target="offtaskdet" parent="1" style="strokeColor=#d79b00;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -97,38 +113,29 @@
           <mxGeometry x="536" y="153" width="70" height="20" as="geometry" />
         </mxCell>
 
-        <mxCell id="att" value="Điểm danh" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/checkmark.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="630" y="240" width="50" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="stu" value="Trạng thái SV" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/brain.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="630" y="380" width="50" height="50" as="geometry" />
-        </mxCell>
         <mxCell id="loc" value="Theo dõi Vị trí" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/map-pin.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="630" y="470" width="50" height="50" as="geometry" />
+          <mxGeometry x="580" y="240" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="lec" value="Giám sát Giảng viên" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/teacher.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="630" y="530" width="50" height="50" as="geometry" />
+          <mxGeometry x="680" y="240" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="att" value="Điểm danh" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/checkmark.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="630" y="380" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="stu" value="Trạng thái SV" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;aspect=fixed;image=https://img.icons8.com/color/96/brain.png;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="630" y="500" width="50" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="e_facatt" value="" edge="1" source="facerec" target="att" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_rfatt" value="" edge="1" source="facerec" target="att" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_posestu" value="" edge="1" source="poseest" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_odstu" value="" edge="1" source="offtaskdet" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_headstu" value="" edge="1" source="headpose" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_motloc" value="" edge="1" source="tracking" target="loc" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_offstu" value="" edge="1" source="offtaskdet" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_objloc" value="" edge="1" source="objdet" target="loc" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_objstu" value="" edge="1" source="objdet" target="stu" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_objlec" value="" edge="1" source="objdet" target="lec" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
+        <mxCell id="e_motlec" value="" edge="1" source="tracking" target="lec" parent="1" style="strokeColor=#9673a6;strokeWidth=2;fillColor=none;endArrow=block;endFill=1;rounded=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
