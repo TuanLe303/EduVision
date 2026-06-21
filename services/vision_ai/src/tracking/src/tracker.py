@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
-from ultralytics import YOLO
 
 
 @dataclass
@@ -73,6 +72,8 @@ class Tracker:
         self._iou = iou_threshold
         # Ultralytics accepts None to mean "auto-select"
         self._device: Optional[str] = None if device == "auto" else device
+        from ultralytics import YOLO
+
         self._model = YOLO(f"{model_name}.pt")
 
     # ------------------------------------------------------------------

@@ -1,0 +1,6 @@
+model: yolo11s
+confidence_threshold: 0.4
+iou_threshold: 0.5
+input_size: 640
+device: auto
+

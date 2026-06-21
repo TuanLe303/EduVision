@@ -1,0 +1,5 @@
+# InsightFace SCRFD face detector
+model: scrfd_500m_bnkps    # scrfd_500m_bnkps | scrfd_2.5g_bnkps | scrfd_10g_bnkps
+input_size: [640, 640]
+confidence_threshold: 0.5  # minimum face score to keep
+device: cpu                # cpu | cuda

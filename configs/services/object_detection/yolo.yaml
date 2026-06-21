@@ -1,0 +1,17 @@
+model: yolo11n
+confidence_threshold: 0.35
+iou_threshold: 0.5
+input_size: 640
+device: auto
+proximity_threshold: 0.25
+target_labels:
+  - cell phone
+  - laptop
+  - book
+  - bottle
+  - backpack
+  - cup
+  - sandwich
+  - pizza
+  - cake
+
