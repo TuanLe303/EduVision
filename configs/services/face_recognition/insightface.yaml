@@ -1,0 +1,7 @@
+model: buffalo_s
+input_size: [640, 640]
+similarity_threshold: 0.35
+device: cpu
+providers:
+  - CPUExecutionProvider
+

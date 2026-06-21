@@ -1,0 +1,6 @@
+model: yolo11s-pose
+confidence_threshold: 0.35
+iou_threshold: 0.5
+input_size: 640
+device: auto
+

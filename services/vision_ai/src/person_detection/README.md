@@ -1,4 +1,44 @@
-# Person Detection Module
+# Person Detection
+
+Current first-party wrapper around Ultralytics YOLOv11 for detecting persons
+in a video frame.
+
+## Current API
+
+```python
+from services.vision_ai.src.person_detection import PersonDetector
+
+detector = PersonDetector()
+persons = detector.detect(frame)
+
+for person in persons:
+    print(person.bbox, person.confidence, person.class_id)
+```
+
+Output is `List[PersonDetection]`, sorted by descending confidence:
+
+```python
+@dataclass
+class PersonDetection:
+    bbox: List[float]  # [x1, y1, x2, y2] pixel coordinates
+    confidence: float  # person detection score [0, 1]
+    class_id: int = 0  # COCO class 0 = person
+```
+
+Config files are at `configs/services/person_detection/`:
+
+- `yolo11n.yaml`
+- `yolo11s.yaml`
+
+Switch models with:
+
+```python
+detector = PersonDetector(model_name="yolo11s")
+```
+
+The older planning notes below are kept for context.
+
+# Original Planning Notes
 
 Detects all persons in each video frame and returns bounding boxes with confidence scores. This is the first stage of the EduVision pipeline — all downstream modules (tracking, face recognition, behavior analysis) operate on the regions produced here.
 
@@ -28,15 +68,14 @@ Only the `person` class (COCO class 0) is passed downstream. All other detected 
 
 ## Configuration
 
-Configured via `configs/vision_ai.yaml`:
+Configured via `configs/services/person_detection/{model}.yaml`:
 
 ```yaml
-person_detection:
-  model: yolo11n          # yolo11n | yolo11s
-  confidence_threshold: 0.4
-  iou_threshold: 0.5
-  input_size: 640
-  device: auto            # auto | cpu | cuda:0
+model: yolo11n          # yolo11n | yolo11s
+confidence_threshold: 0.4
+iou_threshold: 0.5
+input_size: 640
+device: auto            # auto | cpu | cuda:0
 ```
 
 Or overridden at runtime:
