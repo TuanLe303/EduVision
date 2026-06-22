@@ -1,0 +1,16 @@
+# Report Generator configuration
+# Override any value via CLI flags (--llm, --language, --min-frames)
+
+llm_provider: gemini        # "gemini" | "gpt"
+report_language: vi         # "vi" (Tiếng Việt) | "en" (English)
+min_present_frames: 5       # tracks with fewer frames are excluded from the report
+
+gemini:
+  model: gemini-2.0-flash
+  temperature: 0.7
+  max_output_tokens: 2048
+
+gpt:
+  model: gpt-4o-mini
+  temperature: 0.7
+  max_tokens: 2048
