@@ -152,6 +152,7 @@ def aggregate_jsonl(path: str | Path, min_present_frames: int = 5) -> SessionSum
     students.sort(key=lambda s: s.track_id)
 
     avg_attention = sum(all_attention) / len(all_attention) if all_attention else 0.0
+    # fix: max(1, …) prevents ZeroDivisionError when the session has no behaviour events
     behavior_dist = {
         state: class_state_totals.get(state, 0) / max(1, class_total_count)
         for state in _BEHAVIOR_STATES
