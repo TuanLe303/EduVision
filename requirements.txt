@@ -24,3 +24,4 @@ matplotlib>=3.7.0         # Visualization / verification
 google-generativeai>=0.8.0  # Gemini API
 openai>=1.30.0               # OpenAI GPT API
 loguru>=0.7.0                # Structured logging
+
