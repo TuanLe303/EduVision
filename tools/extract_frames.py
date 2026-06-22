@@ -88,9 +88,19 @@ BEHAVIOR_REMAP = {
 # ──────────────────────────────────────────────────────────────────────────────
 
 def slugify(name: str) -> str:
-    """Convert arbitrary string to filesystem-safe slug."""
+    """Convert arbitrary string to ASCII filesystem-safe slug.
+    
+    Strips Unicode diacriticals (e.g., ó→o, é→e, ả→a) to ensure
+    compatibility with cv2.imwrite() on Windows which can't handle
+    non-ASCII paths reliably.
+    """
+    import unicodedata
     name = name.lower().strip()
-    name = re.sub(r"[^\w\s-]", "", name)
+    # Decompose Unicode characters and remove combining marks (diacriticals)
+    name = unicodedata.normalize("NFD", name)
+    name = "".join(c for c in name if unicodedata.category(c) != "Mn")
+    # Remove non-alphanumeric chars (except spaces and hyphens)
+    name = re.sub(r"[^\w\s-]", "", name, flags=re.ASCII)
     name = re.sub(r"[\s-]+", "_", name)
     return name
 
@@ -186,8 +196,8 @@ def process_wide_shot(fps: float, quality: int) -> list[dict]:
             continue
 
         stem = video_file.stem
-        # Try remap first, fall back to slugify
-        out_name = WIDE_SHOT_REMAP.get(stem) or slugify(stem)
+        # Try remap first (lowercase for case-insensitive match), fall back to slugify
+        out_name = WIDE_SHOT_REMAP.get(stem.lower()) or slugify(stem)
         out_dir  = OUTPUT_ROOT / "wide_shot" / out_name
 
         print(f"  [VIDEO] {video_file.name}  ->  {out_dir.relative_to(PROJECT_ROOT)}")

@@ -1,13 +1,11 @@
 """
-EduVision -- Auto-Annotation Tool
-====================================
-Uses a pretrained YOLO11 model to automatically detect persons in Wide Shot
+EduVision — Auto-Annotation Tool (YOLO26)
+============================================
+Uses a pretrained YOLO26 model to automatically detect persons in Wide Shot
 frames and generates YOLO-format annotation (.txt) files.
 
-The output is a Roboflow/YOLO-compatible dataset structure that can be:
-  1. Directly used to train a YOLO person-detector
-  2. Uploaded to Roboflow for manual review / label refinement
-  3. Extended with behavior labels after human review
+Also annotates Expression Data frames by running person detection first,
+then assigning behavior class labels based on folder names.
 
 Output structure:
     data/
@@ -15,6 +13,9 @@ Output structure:
         ├── wide_shot/
         │   ├── images/        <- frame .jpg files (copied)
         │   └── labels/        <- YOLO .txt files  (auto-generated)
+        ├── expression/
+        │   ├── images/        <- cropped person .jpg files
+        │   └── labels/        <- YOLO .txt files with behavior class
         ├── dataset.yaml       <- YOLO dataset config
         └── annotation_report.json
 
@@ -24,23 +25,30 @@ YOLO label format (one line per detected object):
 Usage:
     python tools/auto_annotate.py                     # default settings
     python tools/auto_annotate.py --conf 0.4          # stricter confidence
-    python tools/auto_annotate.py --model yolo11s     # larger model
+    python tools/auto_annotate.py --model yolo26n     # YOLO26 nano (default)
+    python tools/auto_annotate.py --model yolo26s     # YOLO26 small
     python tools/auto_annotate.py --preview           # show sample frames
     python tools/auto_annotate.py --help
 """
 
 import argparse
+import io
 import json
 import shutil
 import sys
 import time
 from pathlib import Path
 
+# Force UTF-8 output on Windows
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 try:
     from ultralytics import YOLO
 except ImportError:
     print("[ERROR] ultralytics is not installed.")
-    print("  Run:  pip install ultralytics")
+    print("  Run:  pip install -U ultralytics")
     sys.exit(1)
 
 try:
@@ -49,6 +57,13 @@ except ImportError:
     print("[ERROR] opencv-python is not installed.")
     print("  Run:  pip install opencv-python")
     sys.exit(1)
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    # Fallback: simple progress without tqdm
+    def tqdm(iterable, **kwargs):
+        return iterable
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Paths
@@ -64,7 +79,7 @@ EXPR_DIR      = FRAMES_ROOT / "expression"
 # COCO class id for "person" = 0
 PERSON_CLASS_ID = 0
 
-# Behavior classes for the dataset YAML
+# Behavior classes for the EduVision dataset
 BEHAVIOR_CLASSES = [
     "person",          # 0 — generic person (wide shot)
     "focused",         # 1
@@ -78,6 +93,33 @@ BEHAVIOR_CLASSES = [
 ]
 
 BEHAVIOR_CLASS_ID = {name: i for i, name in enumerate(BEHAVIOR_CLASSES)}
+
+# Folder name variations → canonical behavior name
+# Handles extract_frames.py output like "using_phone_1" → "using_phone"
+BEHAVIOR_FOLDER_REMAP = {
+    "using_phone_1": "using_phone",
+    "using_phone_2": "using_phone",
+}
+
+
+def resolve_behavior(folder_name: str) -> tuple[str, int]:
+    """Resolve folder name to (canonical_behavior, class_id)."""
+    canonical = BEHAVIOR_FOLDER_REMAP.get(folder_name, folder_name)
+    cls_id = BEHAVIOR_CLASS_ID.get(canonical, 0)
+    return canonical, cls_id
+
+# Class colors for preview visualization (BGR)
+CLASS_COLORS = [
+    (255, 100, 0),    # person: blue
+    (0, 200, 0),      # focused: green
+    (0, 220, 255),    # drowsy: yellow
+    (0, 165, 255),    # sleeping: orange
+    (0, 0, 255),      # using_phone: red
+    (200, 0, 200),    # off_task: purple
+    (255, 255, 0),    # side_talking: cyan
+    (200, 0, 200),    # away_from_seat: magenta
+    (0, 255, 128),    # raising_hand: lime
+]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -94,8 +136,9 @@ def xyxy_to_yolo(x1: float, y1: float, x2: float, y2: float,
     return cx, cy, w, h
 
 
-def draw_preview(image_path: Path, label_path: Path, class_names: list[str]) -> None:
-    """Display an annotated preview frame (press any key to close)."""
+def draw_preview(image_path: Path, label_path: Path, class_names: list[str],
+                 save_path: Path | None = None) -> None:
+    """Draw annotated preview and optionally save to file."""
     img = cv2.imread(str(image_path))
     if img is None:
         return
@@ -106,18 +149,28 @@ def draw_preview(image_path: Path, label_path: Path, class_names: list[str]) -> 
                 parts = line.strip().split()
                 if len(parts) != 5:
                     continue
-                cls_id, cx, cy, bw, bh = int(parts[0]), *map(float, parts[1:])
+                cls_id = int(parts[0])
+                cx, cy, bw, bh = map(float, parts[1:])
                 x1 = int((cx - bw / 2) * w)
                 y1 = int((cy - bh / 2) * h)
                 x2 = int((cx + bw / 2) * w)
                 y2 = int((cy + bh / 2) * h)
                 label = class_names[cls_id] if cls_id < len(class_names) else str(cls_id)
-                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(img, label, (x1, y1 - 8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    cv2.imshow(f"Preview: {image_path.name}", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+                color = CLASS_COLORS[cls_id] if cls_id < len(CLASS_COLORS) else (0, 255, 0)
+                cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                # Background for text
+                (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                cv2.rectangle(img, (x1, y1 - th - 6), (x1 + tw + 4, y1), color, -1)
+                cv2.putText(img, label, (x1 + 2, y1 - 4),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+    if save_path:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(save_path), img)
+    else:
+        cv2.imshow(f"Preview: {image_path.name}", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -143,11 +196,16 @@ def annotate_wide_shot(model: YOLO, conf: float, preview: bool) -> dict:
         angle_name  = angle_dir.name
         angle_stats = {"frames": 0, "detections": 0}
 
-        print(f"\n  [ANGLE] {angle_name}")
+        # Collect both original and augmented frames
         frame_files = sorted(angle_dir.glob("*.jpg"))
+        if not frame_files:
+            print(f"  [WARN] No .jpg files in {angle_name}")
+            continue
 
-        for img_path in frame_files:
-            # Copy image
+        print(f"\n  [ANGLE] {angle_name}  ({len(frame_files)} frames)")
+
+        for img_path in tqdm(frame_files, desc=f"    {angle_name}", unit="frame"):
+            # Copy image with angle prefix to avoid name collisions
             dest_img = images_out / f"{angle_name}__{img_path.name}"
             shutil.copy2(img_path, dest_img)
 
@@ -195,27 +253,32 @@ def annotate_wide_shot(model: YOLO, conf: float, preview: bool) -> dict:
         stats["angles"][angle_name] = angle_stats
 
         # Preview one frame per angle
-        if preview:
-            sample = next(iter(frame_files), None)
-            if sample:
-                dest_img   = images_out / f"{angle_name}__{sample.name}"
-                dest_label = labels_out / f"{angle_name}__{sample.stem}.txt"
-                draw_preview(dest_img, dest_label, BEHAVIOR_CLASSES)
+        if preview and frame_files:
+            sample = frame_files[0]
+            dest_img   = images_out / f"{angle_name}__{sample.name}"
+            dest_label = labels_out / f"{angle_name}__{sample.stem}.txt"
+            preview_path = OUTPUT_ROOT / "previews" / f"wide_{angle_name}.jpg"
+            draw_preview(dest_img, dest_label, BEHAVIOR_CLASSES, save_path=preview_path)
+            print(f"      Preview saved -> {preview_path.relative_to(PROJECT_ROOT)}")
 
     return stats
 
 
-def annotate_expression(preview: bool) -> dict:
+def annotate_expression(model: YOLO, conf: float, preview: bool) -> dict:
     """
-    For expression frames, the label IS the folder name.
-    Copies images and writes YOLO labels using a full-frame bbox
-    (class = behavior class, box covers the whole image = 0.5 0.5 1.0 1.0).
+    For expression frames:
+    1. Run person detection to get actual person bounding box
+    2. Assign behavior class based on the folder name
+    
+    This produces proper per-person bounding boxes with behavior labels,
+    not full-frame classification boxes.
+    """
+    images_out = OUTPUT_ROOT / "expression" / "images"
+    labels_out = OUTPUT_ROOT / "expression" / "labels"
+    images_out.mkdir(parents=True, exist_ok=True)
+    labels_out.mkdir(parents=True, exist_ok=True)
 
-    NOTE: These are 'classification-style' labels. If you want precise
-    per-person bounding boxes, run the wide_shot detector on these too
-    (add --expr-detect flag) or refine on Roboflow.
-    """
-    stats = {"processed": 0, "behaviors": {}}
+    stats = {"processed": 0, "behaviors": {}, "total_detections": 0}
 
     for pos_dir in sorted(EXPR_DIR.iterdir()):
         if not pos_dir.is_dir():
@@ -227,32 +290,71 @@ def annotate_expression(preview: bool) -> dict:
             if not behavior_dir.is_dir():
                 continue
             behavior = behavior_dir.name
-            cls_id   = BEHAVIOR_CLASS_ID.get(behavior, 0)
-
-            images_out = OUTPUT_ROOT / "expression" / pos_name / behavior / "images"
-            labels_out = OUTPUT_ROOT / "expression" / pos_name / behavior / "labels"
-            images_out.mkdir(parents=True, exist_ok=True)
-            labels_out.mkdir(parents=True, exist_ok=True)
+            behavior_canonical, cls_id = resolve_behavior(behavior)
 
             frame_files = sorted(behavior_dir.glob("*.jpg"))
+            if not frame_files:
+                continue
+
             n = 0
-            for img_path in frame_files:
-                shutil.copy2(img_path, images_out / img_path.name)
-                label_path = labels_out / f"{img_path.stem}.txt"
-                # Full-frame bbox (whole image = one subject performing behavior)
-                with open(label_path, "w") as f:
-                    f.write(f"{cls_id} 0.500000 0.500000 1.000000 1.000000\n")
+            n_det = 0
+            for img_path in tqdm(frame_files, desc=f"    {pos_name}/{behavior}", unit="frame"):
+                # Unique filename: pos_behavior_frame.jpg
+                dest_name = f"{pos_name}__{behavior}__{img_path.name}"
+                dest_img = images_out / dest_name
+                shutil.copy2(img_path, dest_img)
+
+                # Run person detection to get actual bounding box
+                img = cv2.imread(str(img_path))
+                if img is None:
+                    continue
+                img_h, img_w = img.shape[:2]
+
+                results = model.predict(
+                    source=str(img_path),
+                    conf=conf,
+                    classes=[PERSON_CLASS_ID],
+                    verbose=False,
+                )
+
+                label_lines = []
+                for r in results:
+                    for box in r.boxes:
+                        x1, y1, x2, y2 = box.xyxy[0].tolist()
+                        cx, cy, bw, bh = xyxy_to_yolo(x1, y1, x2, y2, img_w, img_h)
+                        cx = max(0.0, min(1.0, cx))
+                        cy = max(0.0, min(1.0, cy))
+                        bw = max(0.001, min(1.0, bw))
+                        bh = max(0.001, min(1.0, bh))
+                        # Use BEHAVIOR class id instead of person (0)
+                        label_lines.append(f"{cls_id} {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}")
+                        n_det += 1
+
+                if not label_lines:
+                    # Fallback: if no person detected, use full-frame box
+                    label_lines.append(f"{cls_id} 0.500000 0.500000 1.000000 1.000000")
+
+                dest_label = labels_out / f"{pos_name}__{behavior}__{img_path.stem}.txt"
+                with open(dest_label, "w") as f:
+                    f.write("\n".join(label_lines))
                 n += 1
 
             stats["processed"] += n
-            stats["behaviors"][f"{pos_name}/{behavior}"] = n
-            print(f"    {behavior:20s}  {n:3d} frames  (class_id={cls_id})")
+            stats["total_detections"] += n_det
+            stats["behaviors"][f"{pos_name}/{behavior}"] = {
+                "frames": n,
+                "detections": n_det,
+                "class_id": cls_id,
+            }
+            print(f"    {behavior:20s}  {n:3d} frames, {n_det:3d} detections  (class_id={cls_id})")
 
             if preview and frame_files:
-                sample     = frame_files[0]
-                dest_img   = images_out / sample.name
-                dest_label = labels_out / f"{sample.stem}.txt"
-                draw_preview(dest_img, dest_label, BEHAVIOR_CLASSES)
+                sample = frame_files[0]
+                dest_name = f"{pos_name}__{behavior}__{sample.name}"
+                dest_img   = images_out / dest_name
+                dest_label = labels_out / f"{pos_name}__{behavior}__{sample.stem}.txt"
+                preview_path = OUTPUT_ROOT / "previews" / f"expr_{pos_name}_{behavior}.jpg"
+                draw_preview(dest_img, dest_label, BEHAVIOR_CLASSES, save_path=preview_path)
 
     return stats
 
@@ -262,13 +364,15 @@ def annotate_expression(preview: bool) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def write_dataset_yaml() -> None:
-    """Write a YOLO dataset.yaml pointing to the annotated wide_shot split."""
+    """Write a YOLO dataset.yaml for the annotated data."""
     yaml_path = OUTPUT_ROOT / "dataset.yaml"
     content = f"""# EduVision -- YOLO Dataset Configuration
 # Generated by tools/auto_annotate.py
+# Model: YOLO26
 #
-# After splitting into train/val/test, update the paths below.
-# Use tools/split_dataset.py (coming soon) to create the split.
+# After merging with external datasets and splitting, use:
+#   python tools/merge_datasets.py
+#   python tools/split_dataset.py --ratio 70 20 10
 
 path: {OUTPUT_ROOT.as_posix()}  # dataset root
 
@@ -286,8 +390,9 @@ names:
     content += """
 # Notes:
 #   class 0 = 'person'  (wide-shot auto-detected bounding boxes)
-#   classes 1-8 = behavior labels (expression data, full-frame boxes)
-#   After Roboflow review, merge and re-export with precise per-person boxes.
+#   classes 1-8 = behavior labels (expression data, person-detected boxes)
+#   Use tools/merge_datasets.py to combine with external datasets.
+#   Use tools/split_dataset.py to create train/val/test split.
 """
     with open(yaml_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -300,23 +405,26 @@ names:
 
 def print_summary(wide_stats: dict, expr_stats: dict, model_name: str) -> None:
     print("\n" + "-" * 60)
-    print("  AUTO-ANNOTATION SUMMARY")
+    print("  AUTO-ANNOTATION SUMMARY (YOLO26)")
     print("-" * 60)
     print(f"  Model used        : {model_name}")
     print(f"  Wide shot frames  : {wide_stats.get('processed', 0)}")
     print(f"  Person detections : {wide_stats.get('total_detections', 0)}")
     print(f"  Expr frames       : {expr_stats.get('processed', 0)}")
-    avg = (wide_stats.get('total_detections', 0) /
-           max(1, wide_stats.get('processed', 1)))
-    print(f"  Avg persons/frame : {avg:.1f}")
+    print(f"  Expr detections   : {expr_stats.get('total_detections', 0)}")
+    w_proc = wide_stats.get('processed', 0)
+    if w_proc:
+        avg = wide_stats.get('total_detections', 0) / w_proc
+        print(f"  Avg persons/frame : {avg:.1f}")
     print(f"  Output            : {OUTPUT_ROOT.relative_to(PROJECT_ROOT)}")
     print("-" * 60)
     print()
     print("  NEXT STEPS:")
-    print("  1. Upload data/annotated/wide_shot/ to Roboflow for review")
-    print("     -> Fix missed detections & add behavior labels")
-    print("  2. Run: python tools/split_dataset.py --ratio 70 20 10")
-    print("  3. Train: yolo train data=data/annotated/dataset.yaml model=yolo11n.pt")
+    print("  1. Review annotations: python tools/verify_dataset.py --stage annotated")
+    print("  2. Merge datasets:    python tools/merge_datasets.py")
+    print("  3. Split dataset:     python tools/split_dataset.py --ratio 70 20 10")
+    print("  4. Train:             yolo train data=data/dataset/dataset.yaml"
+          " model=yolo26n.pt epochs=50 imgsz=640")
     print("-" * 60)
 
 
@@ -324,10 +432,12 @@ def save_report(wide_stats: dict, expr_stats: dict, model_name: str,
                 conf: float) -> None:
     report = {
         "model": model_name,
+        "model_version": "YOLO26",
         "confidence_threshold": conf,
         "wide_shot": wide_stats,
         "expression": expr_stats,
         "behavior_classes": BEHAVIOR_CLASSES,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     report_path = OUTPUT_ROOT / "annotation_report.json"
     with open(report_path, "w", encoding="utf-8") as f:
@@ -341,14 +451,15 @@ def save_report(wide_stats: dict, expr_stats: dict, model_name: str,
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="EduVision -- Auto-annotate frames using pretrained YOLO11.",
+        description="EduVision -- Auto-annotate frames using pretrained YOLO26.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
     parser.add_argument(
-        "--model", default="yolo11n",
-        choices=["yolo11n", "yolo11s", "yolo11m", "yolo11l"],
-        help="YOLO11 model size (default: yolo11n — fastest)"
+        "--model", default="yolo26n",
+        choices=["yolo26n", "yolo26s", "yolo26m", "yolo26l",
+                 "yolo11n", "yolo11s"],  # backward compat
+        help="YOLO model size (default: yolo26n — fastest, NMS-free)"
     )
     parser.add_argument(
         "--conf", type=float, default=0.35,
@@ -364,7 +475,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--preview", action="store_true",
-        help="Show preview of annotated frames (requires display)"
+        help="Save preview images with drawn bounding boxes"
     )
     return parser.parse_args()
 
@@ -373,7 +484,7 @@ def main() -> None:
     args = parse_args()
 
     print("-" * 60)
-    print("  EduVision -- Auto-Annotation Tool")
+    print("  EduVision -- Auto-Annotation Tool (YOLO26)")
     print("-" * 60)
     print(f"  Model   : {args.model}.pt")
     print(f"  Conf    : {args.conf}")
@@ -399,8 +510,8 @@ def main() -> None:
         wide_stats = annotate_wide_shot(model, args.conf, args.preview)
 
     if not args.wide_only:
-        print("\n-- Expression Data Label Copy --------------------------------")
-        expr_stats = annotate_expression(args.preview)
+        print("\n-- Expression Data Auto-Detection -----------------------------")
+        expr_stats = annotate_expression(model, args.conf, args.preview)
 
     write_dataset_yaml()
     elapsed = time.time() - t0
