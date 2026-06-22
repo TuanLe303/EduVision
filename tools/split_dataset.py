@@ -1,10 +1,10 @@
 """
 EduVision -- Dataset Split Tool
 =================================
-Splits the annotated Wide Shot dataset into train / val / test sets
-and updates dataset.yaml accordingly.
+Splits the merged dataset (from tools/merge_datasets.py) or annotated
+data into train / val / test sets and creates a YOLO26-ready dataset.
 
-Default split: 70% train / 20% val / 10% test  (stratified by camera angle)
+Default split: 70% train / 20% val / 10% test  (stratified by source prefix)
 
 Output structure:
     data/
@@ -39,6 +39,9 @@ from pathlib import Path
 # ─────────────────────────────────────────────────────────────────────────────
 
 PROJECT_ROOT   = Path(__file__).resolve().parent.parent
+# Default source: merged dataset (output of merge_datasets.py)
+# Falls back to annotated/wide_shot if merged doesn't exist
+MERGED_ROOT    = PROJECT_ROOT / "data" / "merged"
 ANNOTATED_ROOT = PROJECT_ROOT / "data" / "annotated" / "wide_shot"
 OUTPUT_ROOT    = PROJECT_ROOT / "data" / "dataset"
 
@@ -133,9 +136,12 @@ def print_summary(counts: dict, total: int, train_r: float, val_r: float) -> Non
         bar = "|" * int(pct / 2)
         print(f"  {split:8s}  {n:4d} frames  ({pct:.1f}%)  {bar}")
     print()
-    print("  To start training:")
+    print("  To start training (YOLO26):")
     print(f"    yolo train data={OUTPUT_ROOT.as_posix()}/dataset.yaml")
-    print( "                   model=yolo11n.pt epochs=50 imgsz=640")
+    print( "                   model=yolo26n.pt epochs=50 imgsz=640")
+    print()
+    print("  To verify dataset:")
+    print("    python tools/verify_dataset.py --stage dataset")
     print("-" * 60)
 
 
@@ -159,8 +165,9 @@ def parse_args() -> argparse.Namespace:
         help="Random seed for reproducibility (default: 42)"
     )
     parser.add_argument(
-        "--source", type=Path, default=ANNOTATED_ROOT,
-        help=f"Source annotated wide_shot dir (default: {ANNOTATED_ROOT})"
+        "--source", type=Path, default=None,
+        help="Source data dir with images/ and labels/ subdirs. "
+             "Default: data/merged/ if exists, else data/annotated/wide_shot/"
     )
     parser.add_argument(
         "--stratify", action="store_true", default=True,
@@ -180,21 +187,33 @@ def main() -> None:
     train_r = train_pct / 100
     val_r   = val_pct   / 100
 
+    # Determine source directory
+    if args.source is not None:
+        source = args.source
+    elif MERGED_ROOT.exists() and (MERGED_ROOT / "images").exists():
+        source = MERGED_ROOT
+    elif ANNOTATED_ROOT.exists() and (ANNOTATED_ROOT / "images").exists():
+        source = ANNOTATED_ROOT
+    else:
+        print("[ERROR] No dataset found. Run one of:")
+        print("  python tools/merge_datasets.py   (recommended)")
+        print("  python tools/auto_annotate.py     (EduVision data only)")
+        sys.exit(1)
+
     print("-" * 60)
     print("  EduVision -- Dataset Split Tool")
     print("-" * 60)
-    print(f"  Source : {args.source.relative_to(PROJECT_ROOT)}")
+    print(f"  Source : {source.relative_to(PROJECT_ROOT)}")
     print(f"  Output : {OUTPUT_ROOT.relative_to(PROJECT_ROOT)}")
     print(f"  Ratio  : {train_pct:.0f}/{val_pct:.0f}/{test_pct:.0f}")
     print(f"  Seed   : {args.seed}")
     print()
 
-    images_dir = args.source / "images"
-    labels_dir = args.source / "labels"
+    images_dir = source / "images"
+    labels_dir = source / "labels"
 
     if not images_dir.exists():
         print(f"[ERROR] Images dir not found: {images_dir}")
-        print("  Run tools/auto_annotate.py first.")
         sys.exit(1)
 
     all_pairs = collect_pairs(images_dir, labels_dir)
