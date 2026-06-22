@@ -1,0 +1,19 @@
+# EduVision — Dependencies
+# Core CV & ML
+ultralytics>=8.4.0        # YOLO26 (includes YOLO11 backward compat)
+opencv-python>=4.8.0
+Pillow>=10.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Data processing
+numpy>=1.24.0
+tqdm>=4.65.0
+PyYAML>=6.0
+albumentations>=1.3.0     # Data augmentation
+
+# Upload / version control
+huggingface_hub>=0.20.0
+
+# Utilities
+matplotlib>=3.7.0         # Visualization / verification

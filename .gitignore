@@ -1,5 +1,7 @@
 # Virtual environment
 ev/
+.venv/
+venv/
 
 # Model weight files
 *.pth
@@ -10,8 +12,29 @@ ev/
 *.weights
 *.h5
 
-# Data folder contents
+# Data folder contents (processed data — gitignored, uploaded to HuggingFace)
 **/data/**
+
+# Raw video data & downloaded datasets (too large for git)
+Data Collection/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Memory file
 mem.md
