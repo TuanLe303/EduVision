@@ -36,6 +36,15 @@ Switch models with:
 detector = PersonDetector(model_name="yolo11s")
 ```
 
+The detector validates that each input is a non-empty `uint8` BGR image with
+shape `(height, width, 3)`. Invalid frames and invalid thresholds fail before
+inference with a clear `TypeError` or `ValueError`.
+
+`ultralytics` and its runtime dependencies must be installed from the project
+requirements. Model weights are resolved by Ultralytics (and may be downloaded
+on the first run). A preloaded YOLO-compatible model can be supplied with the
+`model` argument, which is useful for dependency injection and offline tests.
+
 The older planning notes below are kept for context.
 
 # Original Planning Notes
@@ -102,7 +111,7 @@ python -m services.vision_ai.src.main --source video.mp4 --detector yolo11s
 
 ## Model Weights
 
-Pre-trained weights are downloaded automatically by Ultralytics on first run and cached in `models/yolo/`:
+Pre-trained weights are downloaded automatically by Ultralytics on first run and cached according to the active Ultralytics settings:
 
 ```
 models/
@@ -111,7 +120,7 @@ models/
     └── yolo11s.pt
 ```
 
-The `models/` directory is git-ignored. Weights are not committed to the repository.
+Weight files (`*.pt`) are git-ignored and are not committed to the repository.
 
 ---
 

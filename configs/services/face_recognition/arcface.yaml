@@ -1,7 +1,2 @@
-model: buffalo_l
-input_size: [640, 640]
-similarity_threshold: 0.35
-device: cpu
-providers:
-  - CPUExecutionProvider
-
+# Retired: ArcFace is not a separate backend in EduVision.
+# Select model_name="buffalo_l" with the InsightFace backend instead.
