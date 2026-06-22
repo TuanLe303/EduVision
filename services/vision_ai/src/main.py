@@ -15,17 +15,21 @@ from services.vision_ai.src.face_detection import FaceDetector
 from services.vision_ai.src.face_recognition import FaceRecognizer
 from services.vision_ai.src.head_pose import HeadPoseEstimator
 from services.vision_ai.src.object_detection import OffTaskObjectDetector
-from services.vision_ai.src.pose_estimation import PoseEstimator
 from services.vision_ai.src.tracking import Tracker
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the EduVision Vision AI pipeline.")
     parser.add_argument("--source", default="0", help="Video path, RTSP URL, or webcam index.")
-    parser.add_argument("--detector", default="yolo11n", choices=["yolo11n", "yolo11s"])
+    parser.add_argument("--detector", default="yolo11n", choices=["yolo11n", "yolo11s","yolo26n","yolo26s"])
     parser.add_argument("--tracker", default="bytetrack", choices=["bytetrack", "botsort"])
     parser.add_argument("--face-detector", default="scrfd", choices=["scrfd", "retinaface"])
-    parser.add_argument("--recognizer", default="insightface", choices=["insightface", "arcface"])
+    parser.add_argument("--recognizer", default="insightface", choices=["insightface"])
+    parser.add_argument(
+        "--recognition-model",
+        choices=["buffalo_s", "buffalo_l"],
+        help="InsightFace model pack. Defaults to face_recognition config.",
+    )
     parser.add_argument("--pose", default="yolo11n-pose", choices=["yolo11n-pose", "yolo11s-pose"])
     parser.add_argument(
         "--head-pose",
@@ -33,8 +37,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["mediapipe-solvepnp"],
         help="Head-pose backend. Currently only MediaPipe + solvePnP is implemented.",
     )
-    parser.add_argument("--device", default="auto", help="auto, cpu, cuda, cuda:0, etc.")
-    parser.add_argument("--face-device", default="cpu", help="cpu or cuda for InsightFace face detection.")
+    parser.add_argument(
+        "--device",
+        default=None,
+        help="auto, cpu, cuda, cuda:0, etc. Defaults to each module config.",
+    )
+    parser.add_argument(
+        "--face-device",
+        default=None,
+        help="cpu, cuda, or cuda:<index>. Defaults to each InsightFace module config.",
+    )
     parser.add_argument("--enrollment-path", help="JSON file with enrolled student embeddings.")
     parser.add_argument("--max-frames", type=int, default=0, help="Stop after N frames. 0 means no limit.")
     parser.add_argument("--output-jsonl", help="Optional path to write one JSON object per processed frame.")
@@ -50,8 +62,9 @@ class VisionPipeline:
     """Connect the implemented Vision AI modules into a per-frame pipeline."""
 
     def __init__(self, args: argparse.Namespace) -> None:
+        tracking_model = args.detector if args.skip_pose else args.pose
         self._tracker = Tracker(
-            model_name=args.detector,
+            model_name=tracking_model,
             tracker=args.tracker,
             device=args.device,
         )
@@ -60,10 +73,6 @@ class VisionPipeline:
             device=args.face_device,
         )
         self._recognizer = self._build_recognizer(args)
-        self._pose_estimator = None if args.skip_pose else PoseEstimator(
-            model_name=args.pose,
-            device=args.device,
-        )
         self._head_pose_estimator = None if args.skip_head_pose else HeadPoseEstimator()
         self._object_detector = None if args.skip_objects else OffTaskObjectDetector(
             model_name=args.detector,
@@ -76,17 +85,19 @@ class VisionPipeline:
             return None
         return FaceRecognizer(
             backend=args.recognizer,
+            model_name=args.recognition_model,
             enrollment_path=args.enrollment_path,
             device=args.face_device,
         )
 
     def process_frame(self, frame: np.ndarray, frame_index: int, timestamp: float) -> dict[str, Any]:
-        tracks = self._tracker.update(frame)
+        tracks, poses_by_track = self._tracker.update_with_poses(frame)
         faces_by_track = self._detect_faces_for_tracks(frame, tracks)
-        recognition_by_track = self._recognize_faces(frame, faces_by_track)
-
-        poses = self._pose_estimator.estimate(frame) if self._pose_estimator else []
-        poses_by_track = {track.track_id: _best_overlap(track.bbox, poses) for track in tracks}
+        recognition_by_track = self._recognize_faces(
+            frame,
+            faces_by_track,
+            [track.track_id for track in tracks],
+        )
 
         head_poses = self._head_pose_estimator.estimate(frame) if self._head_pose_estimator else []
         head_poses_by_track = {
@@ -145,6 +156,8 @@ class VisionPipeline:
 
     def reset(self) -> None:
         self._tracker.reset()
+        if self._recognizer is not None:
+            self._recognizer.reset()
         self._behavior_analyzer.reset()
 
     def _detect_faces_for_tracks(self, frame: np.ndarray, tracks: Sequence[Any]) -> dict[int, Any]:
@@ -158,7 +171,7 @@ class VisionPipeline:
             if not faces:
                 continue
 
-            face = faces[0]
+            face = _select_face_for_person_crop(faces)
             face.bbox = _offset_bbox(face.bbox, offset)
             face.landmarks = [
                 [float(point[0] + offset[0]), float(point[1] + offset[1])]
@@ -167,16 +180,32 @@ class VisionPipeline:
             faces_by_track[track.track_id] = face
         return faces_by_track
 
-    def _recognize_faces(self, frame: np.ndarray, faces_by_track: dict[int, Any]) -> dict[int, Any]:
+    def _recognize_faces(
+        self,
+        frame: np.ndarray,
+        faces_by_track: dict[int, Any],
+        active_track_ids: Sequence[int],
+    ) -> dict[int, Any]:
         if self._recognizer is None:
             return {}
 
+        self._recognizer.update_active_tracks(active_track_ids)
         recognition_by_track: dict[int, Any] = {}
         for track_id, face in faces_by_track.items():
-            crop, _ = _crop(frame, face.bbox)
-            if crop.size == 0:
+            if len(face.landmarks) == 5:
+                recognition_by_track[track_id] = self._recognizer.recognize(
+                    frame,
+                    landmarks=face.landmarks,
+                    track_id=track_id,
+                )
                 continue
-            recognition_by_track[track_id] = self._recognizer.recognize(crop)
+
+            crop, _ = _crop(frame, _expand_bbox(face.bbox, 0.2))
+            if crop.size:
+                recognition_by_track[track_id] = self._recognizer.recognize(
+                    crop,
+                    track_id=track_id,
+                )
         return recognition_by_track
 
 
@@ -250,15 +279,35 @@ def _offset_bbox(bbox: Sequence[float], offset: tuple[int, int]) -> list[float]:
     ]
 
 
-def _best_overlap(track_bbox: Sequence[float], candidates: Iterable[Any]) -> Optional[Any]:
-    best = None
-    best_score = 0.0
-    for candidate in candidates:
-        score = _iou(track_bbox, getattr(candidate, "bbox", []))
-        if score > best_score:
-            best = candidate
-            best_score = score
-    return best if best_score > 0 else None
+def _expand_bbox(bbox: Sequence[float], margin: float) -> list[float]:
+    x1, y1, x2, y2 = (float(value) for value in bbox)
+    width = max(0.0, x2 - x1)
+    height = max(0.0, y2 - y1)
+    return [
+        x1 - width * margin,
+        y1 - height * margin,
+        x2 + width * margin,
+        y2 + height * margin,
+    ]
+
+
+def _select_face_for_person_crop(faces: Sequence[Any]) -> Any:
+    """Prefer the largest face so a partial bystander face is less likely to win."""
+    return max(
+        faces,
+        key=lambda face: (
+            _bbox_area(getattr(face, "bbox", [])),
+            float(getattr(face, "confidence", 0.0)),
+        ),
+    )
+
+
+def _bbox_area(bbox: Sequence[float]) -> float:
+    if len(bbox) < 4:
+        return 0.0
+    return max(0.0, float(bbox[2]) - float(bbox[0])) * max(
+        0.0, float(bbox[3]) - float(bbox[1])
+    )
 
 
 def _best_head_pose(

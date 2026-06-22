@@ -24,7 +24,7 @@ class RecognitionResult:
     matched: bool
 
 
-_SUPPORTED_BACKENDS = ("insightface", "arcface")
+_SUPPORTED_BACKENDS = ("insightface",)
 
 _CONFIGS_DIR = Path(__file__).resolve().parents[5] / "configs" / "services" / "face_recognition"
 
@@ -51,9 +51,8 @@ class FaceRecognizer:
     """
     Face recognition and attendance wrapper.
 
-    Uses InsightFace buffalo models by default. The "arcface" backend is an
-    alias to the same InsightFace embedding path for now, preserving a stable
-    API until a separate ArcFace implementation is added.
+    Legacy implementation retained only as an import-compatibility shim.
+    Public imports resolve to the production implementation in recognizer.py.
 
     Enrollment storage format:
         {
@@ -181,3 +180,7 @@ def _bbox_area(bbox) -> float:
     x1, y1, x2, y2 = bbox
     return max(0.0, float(x2 - x1)) * max(0.0, float(y2 - y1))
 
+
+# Compatibility for callers that imported this historical module directly.
+# The production implementation lives in ``recognizer.py``.
+from .recognizer import FaceRecognizer, RecognitionResult, RegisteredFace  # noqa: E402,F401

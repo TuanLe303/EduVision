@@ -9,14 +9,15 @@ Wrapper around InsightFace SCRFD and RetinaFace for detecting faces in a video f
 | `scrfd` | `scrfd_500m_bnkps` | Fast, lightweight; alternative: `scrfd_2.5g_bnkps`, `scrfd_10g_bnkps` |
 | `retinaface` | `retinaface_r50_v1` | Higher accuracy; alternative: `retinaface_mnet025_v1` |
 
-Models are downloaded automatically by InsightFace on first use to `~/.insightface/models/`.  
-No manual clone or weight download required.
+Models are downloaded automatically by InsightFace on first use to `~/.insightface/models/`.
+The first startup therefore requires network access; later runs use the local cache.
 
 ## Installation
 
 ```bash
-uv pip install insightface onnxruntime        # CPU
-uv pip install insightface onnxruntime-gpu    # GPU
+uv pip install -r requirements.txt            # CPU
+uv pip uninstall onnxruntime
+uv pip install onnxruntime-gpu                # GPU (use instead of onnxruntime)
 ```
 
 ## Input / Output
@@ -72,8 +73,11 @@ detector = FaceDetector(backend="retinaface")
 # Higher accuracy SCRFD model
 detector = FaceDetector(backend="scrfd", model="scrfd_10g_bnkps")
 
-# GPU
+# GPU; requires onnxruntime-gpu instead of onnxruntime
 detector = FaceDetector(device="cuda")
+
+# Select a specific GPU
+detector = FaceDetector(device="cuda:1")
 
 # Override confidence threshold at runtime
 detector = FaceDetector(confidence_threshold=0.7)
