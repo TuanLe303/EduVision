@@ -19,3 +19,9 @@ huggingface_hub>=0.20.0
 
 # Utilities
 matplotlib>=3.7.0         # Visualization / verification
+
+# Report Generator
+google-generativeai>=0.8.0  # Gemini API
+openai>=1.30.0               # OpenAI GPT API
+loguru>=0.7.0                # Structured logging
+
