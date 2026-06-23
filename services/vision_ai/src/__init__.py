@@ -1,12 +1,11 @@
 """Core modules for the Vision AI service."""
 
 __all__ = [
-    "behavior",
+    "behavior_detection",
     "face_detection",
     "face_recognition",
-    "head_pose",
     "object_detection",
     "person_detection",
-    "pose_estimation",
+    "seat_monitor",
     "tracking",
 ]

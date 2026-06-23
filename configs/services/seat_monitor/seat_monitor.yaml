@@ -1,0 +1,17 @@
+# The camera must remain fixed for the whole class session.
+calibration_frames: 60
+min_calibration_samples: 12
+late_calibration_frames: 20
+min_recognition_confidence: 0.65
+
+# Seat region learned from the median person bbox during calibration.
+roi_padding_x: 0.25
+roi_padding_y: 0.20
+leave_distance: 0.80
+return_distance: 0.50
+
+# Temporal hysteresis. Away requires a continuously empty seat, the student
+# detected elsewhere, and face recognition confirming that identity.
+leave_confirm_frames: 20
+return_confirm_frames: 10
+occlusion_frames: 15

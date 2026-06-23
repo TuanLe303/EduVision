@@ -1,0 +1,14 @@
+# YOLO detection dataset: each person bbox has one visual behavior label.
+# away_from_seat is excluded because it is produced by SeatMonitor.
+path: datasets/behavior
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: focused
+  1: drowsy
+  2: sleeping
+  3: using_phone
+  4: off_task
+  5: side_talking

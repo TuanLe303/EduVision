@@ -44,19 +44,23 @@ flowchart TD
         MOT["2. Multi-object Tracking\nByteTrack · BoT-SORT"]
         FD["3. Face Detection\nSCRFD · RetinaFace"]
         FR["4. Face Recognition / Attendance\nbuffalo_s · buffalo_l · ArcFace"]
-        PE["5. Pose Estimation\nyolo11n-pose · yolo11s-pose"]
-        HP["6. Head Pose / Gaze\nMediaPipe+solvePnP · 6DRepNet"]
-        OD["7. Object Detection — off-task\nphone · laptop · tablet · book\npen · earphone · food · bottle"]
-        BA["8. Behavior Analysis\nRule-based Temporal Logic\nfocused · drowsy · using_phone\noff_task · away · side_talking"]
+        OD["5. Object Detection — off-task\nphone · laptop · book · bottle"]
+        BD["6. Behavior Detection\nCustom YOLO\nfocused · drowsy · sleeping\nusing_phone · off_task · side_talking"]
+        TA["7. Temporal Aggregation\nPer-track window · hysteresis"]
+        SM["8. Seat Monitor\nFixed camera · identity · seat ROI\naway_from_seat"]
+        BA["9. Final Behavior\nTemporal behavior + seat priority"]
 
         PD --> MOT
         MOT --> FD
-        MOT --> PE
         FD --> FR
-        PE --> HP
-        HP --> OD
-        FR --> BA
-        OD --> BA
+        MOT --> OD
+        MOT --> BD
+        MOT --> SM
+        FR --> SM
+        OD --> BD
+        BD --> TA
+        TA --> BA
+        SM --> BA
     end
 
     VC --> VA
@@ -76,7 +80,7 @@ flowchart TD
 The system is organized as **independent microservices** that communicate via REST API or message queues:
 
 - **video_connection** — camera/stream ingestion and frame distribution
-- **vision_ai** — core CV pipeline: detection → tracking → face recognition → pose → head pose → object detection → behavior analysis
+- **vision_ai** — core CV pipeline: detection → tracking → face recognition → object detection → behavior detection → temporal aggregation → seat monitoring
 - **backend_api** — persists events to the database and exposes a REST API
 - **report_generator** — queries the database and calls an LLM to produce session reports
 - **frontend** — web dashboard for live monitoring and historical reports
@@ -120,31 +124,15 @@ Selected via `--face-detector scrfd` or `--face-detector retinaface`.
 |---|---|---|
 | **`buffalo_s`** *(default)* | InsightFace `buffalo_s` | Lightweight, suitable for real-time on modest GPU |
 | **`buffalo_l`** | InsightFace `buffalo_l` | Higher accuracy, requires more VRAM |
-| **`arcface`** | ArcFace (standalone) | Flexible, can be paired with any face detector |
 
-Selected via `--recognizer buffalo_s`, `--recognizer buffalo_l`, or `--recognizer arcface`.
+The recognition backend is selected with `--recognizer insightface`; choose the
+model pack with `--recognition-model buffalo_s` or `--recognition-model buffalo_l`.
 
-### 5.5 Pose Estimation
+### 5.5 Object Detection (Off-task Behavior)
 
-| Option | Model | Notes |
-|---|---|---|
-| **`yolo11n-pose`** *(default)* | YOLOv11-pose-nano | Fastest; good for coarse engagement cues |
-| **`yolo11s-pose`** | YOLOv11-pose-small | Better keypoint accuracy, moderate GPU recommended |
-
-Selected via `--pose yolo11n-pose` or `--pose yolo11s-pose`.
-
-### 5.6 Head Pose / Gaze Estimation
-
-| Option | Method | Notes |
-|---|---|---|
-| **`mediapipe-solvepnp`** *(default)* | MediaPipe Face Mesh + OpenCV `solvePnP` | CPU-friendly, sufficient for most attention/drowsiness signals |
-| **`6drepnet`** | [6DRepNet](https://github.com/thohemp/6DRepNet) | Higher accuracy Euler angle estimation; use when `mediapipe-solvepnp` is not precise enough |
-
-Selected via `--head-pose mediapipe-solvepnp` or `--head-pose 6drepnet`.
-
-### 5.7 Object Detection (Off-task Behavior)
-
-Reuses the same YOLO backbone from person detection. Detects objects associated with off-task behavior and combines them with hand position, head pose, and duration context.
+Runs a COCO object detector for off-task objects and associates each object with
+the canonical student track. A detected phone can override the frame-level
+behavior prediction for that track before temporal aggregation.
 
 **Tracked object classes:**
 
@@ -154,35 +142,45 @@ Reuses the same YOLO backbone from person detection. Detects objects associated 
 | Study materials | book, pen, paper |
 | Other | backpack, food, bottle |
 
-Decision rule: `object class` + `hand proximity to object` + `head pose direction` + `sustained duration` → behavior label.
+### 5.6 Behavior Detection and Temporal Aggregation
 
-### 5.8 Behavior Analysis
-
-Rule-based **Temporal Logic** classifier that fuses outputs from all upstream modules.
+A custom YOLO detection model predicts one visual behavior box per visible
+student. Behavior boxes are matched to canonical person tracks, then aggregated
+independently per `track_id` using a temporal window, confidence thresholds,
+priority rules, and hysteresis.
 
 | Input signal | Source module |
 |---|---|
-| Body keypoints | Pose Estimation |
-| Head orientation (yaw / pitch / roll) | Head Pose / Gaze |
-| Detected objects near hands | Object Detection |
-| Track ID + position history | Multi-object Tracking |
+| Visual behavior box | Custom behavior YOLO |
+| Phone/object evidence | Object Detection |
+| Track ID and person bbox | Multi-object Tracking |
+| Prediction history | Temporal Aggregator |
 
 **Output behavior states:**
 
 | State | Trigger signals |
 |---|---|
-| `focused` | Head forward, body upright, no off-task objects, sustained |
-| `drowsy` | Head pitch drop, eye closure cues, slow body movement |
-| `using_phone` | Phone/tablet near hand + head looking down, sustained |
-| `off_task` | Book/paper/object + head not toward board, sustained |
-| `away_from_seat` | No detection at assigned seat for N frames |
-| `side_talking` | Head yaw toward neighbor, no board-facing, sustained |
+| `focused` | Sustained focused prediction |
+| `drowsy` | Sustained drowsy prediction |
+| `sleeping` | Sustained sleeping prediction |
+| `using_phone` | Sustained model prediction or associated phone detection |
+| `off_task` | Sustained off-task prediction |
+| `side_talking` | Sustained side-talking prediction |
+| `away_from_seat` | Fixed-camera seat monitor confirms the student elsewhere while the assigned seat remains empty |
 
-Temporal thresholds (minimum sustained duration before labeling) are configurable in `configs/behavior.yaml`.
+Behavior thresholds are configured in
+`configs/services/behavior_detection/yolo_behavior.yaml`.
+
+### 5.7 Seat Monitoring / Attendance
+
+At class start, recognized tracks calibrate a fixed seat ROI for each student.
+Leaving the seat requires sustained spatial displacement, an empty assigned seat,
+and face recognition confirming the same student at the new location. Missing or
+occluded detections alone are not treated as `away_from_seat`.
 
 ---
 
-### 5.9 Backend & Data
+### 5.8 Backend & Data
 
 | Component | Technology |
 |---|---|
@@ -191,21 +189,21 @@ Temporal thresholds (minimum sustained duration before labeling) are configurabl
 | Deep Learning Framework | PyTorch |
 | Image Processing | OpenCV, Pillow |
 
-### 5.10 LLM Report Generation
+### 5.9 LLM Report Generation
 
 | Provider | Notes |
 |---|---|
 | **Google Gemini** | Selected via `--llm gemini` at runtime |
 | **OpenAI GPT** | Selected via `--llm gpt` at runtime |
 
-### 5.11 Frontend
+### 5.10 Frontend
 
 | Component | Technology |
 |---|---|
 | Web Dashboard | React (planned) |
 | Real-time updates | WebSocket |
 
-### 5.12 Infrastructure
+### 5.11 Infrastructure
 
 | Component | Technology |
 |---|---|
@@ -223,6 +221,29 @@ Temporal thresholds (minimum sustained duration before labeling) are configurabl
 - (Optional) NVIDIA GPU with CUDA for accelerated inference
 
 ### Steps
+
+```powershell
+# Install uv once, then create .venv and install the locked base environment.
+uv sync
+
+# Run tests.
+uv run pytest
+
+# Run the behavior pipeline without the optional face stack.
+uv run python -m services.vision_ai.src.main --source classroom.mp4 `
+  --behavior-model models/behavior_yolo.pt
+```
+
+Face recognition and identity-based seat monitoring are optional because the
+PyPI InsightFace package must compile native code on Windows. Install Microsoft
+Visual C++ Build Tools 14+ first, then use:
+
+```powershell
+uv sync --extra face
+uv run python -m services.vision_ai.src.main --source classroom.mp4 `
+  --behavior-model models/behavior_yolo.pt `
+  --enrollment-path data/enrollments.json --start-class
+```
 
 ```bash
 # 1. Clone the repository

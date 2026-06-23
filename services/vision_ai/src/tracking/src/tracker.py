@@ -7,15 +7,6 @@ from typing import Any, List, Optional
 
 import numpy as np
 
-from services.vision_ai.src.pose_estimation import (
-    SUPPORTED_POSE_MODELS,
-    PoseResult,
-    build_pose_result,
-    extract_pose_arrays,
-    load_pose_config,
-)
-
-
 @dataclass
 class TrackResult:
     track_id: int
@@ -107,19 +98,10 @@ class Tracker:
                 f"tracker must be one of {list(_SUPPORTED_TRACKERS)}, got '{tracker}'"
             )
 
-        pose_config = (
-            load_pose_config(model_name)
-            if model_name in SUPPORTED_POSE_MODELS
-            else None
-        )
-        self._expects_pose = pose_config is not None
-        configured_confidence = (
-            pose_config.confidence_threshold if pose_config is not None else 0.1
-        )
-        configured_iou = pose_config.iou_threshold if pose_config is not None else 0.5
-        configured_input_size = pose_config.input_size if pose_config is not None else 640
-        configured_device = pose_config.device if pose_config is not None else "auto"
-        selected_device = device if device is not None else configured_device
+        configured_confidence = 0.1
+        configured_iou = 0.5
+        configured_input_size = 640
+        selected_device = device if device is not None else "auto"
         if not isinstance(selected_device, str) or not selected_device.strip():
             raise ValueError("device must be a non-empty string")
         selected_device = selected_device.strip()
@@ -141,17 +123,13 @@ class Tracker:
             "iou_threshold", iou_threshold if iou_threshold is not None else configured_iou
         )
         self._input_size = selected_input_size
-        self._keypoint_threshold = (
-            pose_config.keypoint_threshold if pose_config is not None else 0.0
-        )
         # Ultralytics accepts None to mean "auto-select"
         self._device: Optional[str] = (
             None if selected_device == "auto" else selected_device
         )
         from ultralytics import YOLO
 
-        weight = pose_config.model if pose_config is not None else f"{model_name}.pt"
-        self._model = YOLO(weight)
+        self._model = YOLO(f"{model_name}.pt")
 
     # ------------------------------------------------------------------
     # Public API
@@ -168,18 +146,6 @@ class Tracker:
             List of TrackResult.  Empty list when no persons are tracked
             or when the tracker has not yet assigned IDs (e.g. first frame).
         """
-        tracks, _ = self.update_with_poses(frame)
-        return tracks
-
-    def update_with_poses(
-        self, frame: np.ndarray
-    ) -> tuple[List[TrackResult], dict[int, PoseResult]]:
-        """Track people and return pose keypoints from the same inference pass.
-
-        The pose mapping is empty when the configured YOLO model does not
-        produce keypoints. This keeps ``update()`` backward compatible while
-        allowing the end-to-end pipeline to avoid a second pose inference.
-        """
         _validate_frame(frame)
 
         results = self._model.track(
@@ -195,8 +161,6 @@ class Tracker:
         )
 
         tracks: List[TrackResult] = []
-        poses_by_track: dict[int, PoseResult] = {}
-
         for result in results:
             boxes = result.boxes
             if boxes is None or boxes.id is None:
@@ -210,13 +174,7 @@ class Tracker:
                 raise RuntimeError(
                     "tracking result returned different numbers of IDs, boxes, and scores"
                 )
-            pose_points, pose_confidences = extract_pose_arrays(
-                result,
-                len(ids),
-                required=self._expects_pose,
-            )
-
-            for index, (track_id, bbox, conf) in enumerate(zip(ids, bboxes, confs)):
+            for track_id, bbox, conf in zip(ids, bboxes, confs):
                 normalized_track_id = int(track_id)
                 tracks.append(
                     TrackResult(
@@ -225,17 +183,7 @@ class Tracker:
                         confidence=float(conf),
                     )
                 )
-
-                if pose_points is not None and pose_confidences is not None:
-                    poses_by_track[normalized_track_id] = build_pose_result(
-                        bbox,
-                        conf,
-                        pose_points[index],
-                        pose_confidences[index],
-                        self._keypoint_threshold,
-                    )
-
-        return tracks, poses_by_track
+        return tracks
 
     def reset(self) -> None:
         """

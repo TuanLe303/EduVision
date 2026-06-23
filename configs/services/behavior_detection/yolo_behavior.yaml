@@ -1,0 +1,35 @@
+model: models/behavior_yolo.pt
+device: auto
+input_size: 640
+confidence_threshold: 0.30
+iou_threshold: 0.50
+association_min_score: 0.35
+
+# Number of predictions retained independently for each track_id.
+window_size: 12
+min_history: 12
+min_state_frames: 7
+enter_threshold: 0.60
+switch_margin: 0.10
+max_detection_gap: 5
+stale_track_frames: 90
+
+label_aliases:
+  focus: focused
+  side_taliking: side_talking
+
+priority:
+  - sleeping
+  - using_phone
+  - drowsy
+  - side_talking
+  - off_task
+  - focused
+
+state_thresholds:
+  focused: 0.50
+  drowsy: 0.55
+  sleeping: 0.65
+  using_phone: 0.55
+  off_task: 0.55
+  side_talking: 0.55

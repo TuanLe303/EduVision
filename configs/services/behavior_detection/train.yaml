@@ -1,0 +1,11 @@
+pretrained_model: yolo11n.pt
+dataset: configs/services/behavior_detection/dataset.yaml
+epochs: 100
+batch: 16
+input_size: 640
+patience: 20
+workers: 4
+device: auto
+project: runs/behavior_detection
+run_name: behavior_yolo
+production_weight: models/behavior_yolo.pt

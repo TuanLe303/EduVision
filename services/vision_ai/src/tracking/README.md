@@ -1,8 +1,8 @@
 # Tracking Module
 
-Multi-object tracking that assigns a persistent `track_id` to each detected person across frames.
-When configured with a YOLO pose model, tracking and 17-point COCO pose
-estimation are produced by the same inference pass.
+Multi-object tracking that assigns the canonical persistent `track_id` to each
+detected person across frames. Downstream modules reuse this ID for behavior,
+identity, object, and seat results.
 
 ---
 
@@ -41,10 +41,6 @@ Edit those files to tune thresholds (`track_high_thresh`, `match_thresh`, `track
 | `bbox` | `List[float]` | `[x1, y1, x2, y2]` in pixel coordinates |
 | `confidence` | `float` | Detection confidence score |
 
-`update_with_poses()` additionally returns a `poses_by_track` mapping. Each
-pose has exactly 17 named COCO keypoints with coordinates, confidence, and a
-`visible` flag derived from the configured keypoint threshold.
-
 Returns an empty list on the first frame or when no persons are detected.
 
 ---
@@ -68,9 +64,6 @@ tracker = Tracker()
 # Use yolo11s + BoT-SORT
 tracker = Tracker(model_name="yolo11s", tracker="botsort")
 
-# Realtime tracking + pose in one inference
-pose_tracker = Tracker(model_name="yolo11n-pose", tracker="bytetrack")
-
 # Per-frame loop
 for frame in video_stream:
     tracks = tracker.update(frame)
@@ -81,9 +74,9 @@ for frame in video_stream:
 tracker.reset()
 ```
 
-The end-to-end pipeline calls `update_with_poses(frame)`, which returns
-`(tracks, poses_by_track)`. `update(frame)` remains available when only track
-records are needed.
+The end-to-end pipeline calls `update(frame)` once and uses these IDs for every
+downstream task. Behavior YOLO only predicts boxes/classes; Hungarian matching
+attaches those predictions to the canonical IDs here.
 
 The tracker is designed to run as part of the end-to-end Vision AI pipeline.
 Use `python -m services.vision_ai.src.main` to start that pipeline.
