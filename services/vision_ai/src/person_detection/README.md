@@ -132,10 +132,12 @@ Frame
           └─▶ [bbox list]
                   ├─▶ Multi-object Tracking   (assigns persistent track IDs)
                   ├─▶ Face Detection          (crops person region → find face)
-                  └─▶ Pose Estimation         (crops person region → keypoints)
+                  └─▶ Behavior Detection      (associates behavior boxes by track ID)
 ```
 
-The detection output is consumed by the tracker first. The tracker attaches a `track_id` to each box, and only tracked boxes are forwarded to face and pose modules.
+The detection output is consumed by the tracker first. The tracker attaches a
+`track_id` to each box, and canonical tracks are then consumed by face,
+behavior, object, and seat-monitoring modules.
 
 ---
 

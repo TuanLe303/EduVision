@@ -1,5 +1,0 @@
-yaw_threshold: 25.0
-pitch_threshold: 20.0
-max_num_faces: 4
-min_detection_confidence: 0.5
-

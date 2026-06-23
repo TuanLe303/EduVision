@@ -1,6 +1,0 @@
-model: yolo11n-pose
-confidence_threshold: 0.1  # keep low-score detections available to ByteTrack
-iou_threshold: 0.5
-keypoint_threshold: 0.3
-input_size: 640
-device: auto
