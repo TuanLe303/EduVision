@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from dataclasses import asdict
 from pathlib import Path
 from time import time
@@ -10,11 +11,13 @@ from time import time
 import cv2
 import streamlit as st
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from services.report_generator.src.aggregator import aggregate_jsonl
 from services.vision_ai.src.main import VisionPipeline, annotate_frame, build_parser
 
-
-ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "outputs" / "streamlit"
 DEFAULT_BEHAVIOR_WEIGHT = ROOT / "weights" / "behavior_yolo26n.pt"
 
@@ -26,6 +29,8 @@ def _pipeline_args(
     person_input_size: int,
     device: str,
     skip_objects: bool,
+    enrollment_path: str = "",
+    start_class: bool = False,
 ):
     argv = [
         "--behavior-model", behavior_model,
@@ -36,6 +41,10 @@ def _pipeline_args(
     ]
     if skip_objects:
         argv.append("--skip-objects")
+    if enrollment_path and Path(enrollment_path).is_file():
+        argv.extend(["--enrollment-path", enrollment_path])
+    if start_class:
+        argv.append("--start-class")
     return build_parser().parse_args(argv)
 
 
@@ -155,6 +164,8 @@ def main() -> None:
             "Bỏ qua off-task object detector", value=True,
             help="Nhanh hơn; behavior weight vẫn nhận diện using_phone nếu model đã học lớp này.",
         )
+        enrollment_path = st.text_input("Enrollment file path (cho điểm danh)", "data/enrollments.json")
+        start_class = st.checkbox("Bắt đầu lớp học (bật Face Recognition)", value=True)
         max_frames = st.number_input(
             "Giới hạn frame (0 = hết video)", min_value=0, value=300, step=30
         )
@@ -177,7 +188,7 @@ def main() -> None:
         st.error(f"Không tìm thấy behavior weight: {behavior_model}")
     if st.button("Chạy E2E", type="primary", disabled=source is None or not weight_ok):
         args = _pipeline_args(
-            behavior_model, detector, tracker, int(person_input_size), device, skip_objects
+            behavior_model, detector, tracker, int(person_input_size), device, skip_objects, enrollment_path, start_class
         )
         _run_session(source, args, int(max_frames), int(display_every))
 

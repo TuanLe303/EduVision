@@ -3,12 +3,12 @@ name = "eduvision"
 version = "0.1.0"
 description = "Fixed-camera classroom behavior monitoring pipeline"
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.10.9"
 dependencies = [
     "albumentations>=1.4.0,<3",
     "huggingface-hub>=0.20.0,<2",
     "matplotlib>=3.8.0,<4",
-    "numpy>=1.26.0,<3",
+    "numpy>=1.26.0,<2",
     "opencv-python>=4.8.0,<5",
     "pillow>=10.0.0,<13",
     "pyyaml>=6.0,<7",
@@ -18,12 +18,13 @@ dependencies = [
     "torchvision>=0.17.0",
     "tqdm>=4.65.0,<5",
     "ultralytics>=8.4.0,<9",
+    "lapx>=0.5.2",
 ]
 
 [project.optional-dependencies]
 face = [
     "insightface>=0.7.3,<0.8",
-    "onnxruntime>=1.18.0,<2",
+    "onnxruntime-gpu>=1.18.0,<1.24",
 ]
 
 [dependency-groups]
@@ -34,6 +35,16 @@ dev = [
 [tool.uv]
 package = false
 default-groups = ["dev"]
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+insightface = { url = "https://github.com/Gourieff/Assets/raw/main/Insightface/insightface-0.7.3-cp310-cp310-win_amd64.whl" }
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -21,6 +21,14 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--fps", type=float)
     parser.add_argument("--event-iou", type=float, default=0.5)
+    parser.add_argument("--bbox-iou", type=float, default=0.5)
+    parser.add_argument(
+        "--behavior-output",
+        choices=["final", "frame"],
+        default="final",
+        help="Score temporally aggregated final_behavior (E2E) or raw frame_behavior",
+    )
+    parser.add_argument("--quiet", action="store_true", help="Write output without printing full JSON")
     parser.add_argument("--performance", type=Path, help="Optional JSON from benchmark.py")
     parser.add_argument("--case", choices=["best", "normal", "worst"], help="Label only; no case rules yet")
     args = parser.parse_args()
@@ -33,6 +41,8 @@ def main() -> None:
         _jsonl(args.ground_truth),
         fps=args.fps,
         event_iou_threshold=args.event_iou,
+        bbox_iou_threshold=args.bbox_iou,
+        behavior_output=args.behavior_output,
         runtime_seconds=performance.get("runtime_seconds"),
         video_duration_seconds=performance.get("video_duration_seconds"),
         peak_ram_mb=performance.get("peak_ram_mb"),
@@ -43,7 +53,8 @@ def main() -> None:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered + "\n", encoding="utf-8")
-    print(rendered)
+    if not args.quiet:
+        print(rendered)
 
 
 if __name__ == "__main__":
