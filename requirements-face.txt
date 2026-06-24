@@ -1,0 +1,6 @@
+# Install after requirements.txt to enable face detection, recognition, and
+# identity-based seat monitoring. InsightFace builds from source on Windows and
+# therefore requires Microsoft Visual C++ Build Tools 14 or newer.
+-r requirements.txt
+insightface>=0.7.3,<0.8
+onnxruntime>=1.18.0,<2

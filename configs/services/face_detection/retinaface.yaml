@@ -1,4 +1,4 @@
 # InsightFace RetinaFace face detector
 model: retinaface_r50_v1   # retinaface_r50_v1 | retinaface_mnet025_v1
 confidence_threshold: 0.5  # minimum face score to keep
-device: cpu                # cpu | cuda
+device: cpu                # cpu | cuda | cuda:<index>

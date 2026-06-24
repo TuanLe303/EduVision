@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -14,7 +15,7 @@ class PersonDetection:
     class_id: int = 0  # COCO class 0 = person
 
 
-_SUPPORTED_MODELS = ("yolo11n", "yolo11s")
+_SUPPORTED_MODELS = ("yolo11n", "yolo11s","yolo26n","yolo26s")
 
 # configs/services/person_detection/ relative to project root (EduVision/)
 # __file__ is at services/vision_ai/src/person_detection/src/person_detector.py
@@ -27,14 +28,50 @@ def _load_config(model_name: str) -> dict:
 
     path = _CONFIGS_DIR / f"{model_name}.yaml"
     if not path.exists():
-        return {}
-    with path.open() as f:
-        return yaml.safe_load(f) or {}
+        raise FileNotFoundError(f"Person detector config not found: {path}")
+    with path.open(encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
+    if not isinstance(config, dict):
+        raise ValueError(f"Person detector config must be a YAML mapping: {path}")
+    return config
 
 
 def _weight_name(model_name: str, cfg: dict) -> str:
     model = cfg.get("model") or model_name
-    return model if str(model).endswith(".pt") else f"{model}.pt"
+    if not isinstance(model, str) or not model.strip():
+        raise ValueError("'model' in the person detector config must be a non-empty string")
+    model = model.strip()
+    return model if model.endswith(".pt") else f"{model}.pt"
+
+
+def _validate_threshold(name: str, value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a number in [0, 1]")
+    value = float(value)
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"{name} must be in [0, 1], got {value}")
+    return value
+
+
+def _validate_input_size(value: Any) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError("input_size must be a positive integer")
+    if value <= 0:
+        raise ValueError(f"input_size must be positive, got {value}")
+    return value
+
+
+def _validate_frame(frame: np.ndarray) -> None:
+    if not isinstance(frame, np.ndarray):
+        raise TypeError("frame must be a NumPy array")
+    if frame.ndim != 3 or frame.shape[2] != 3:
+        raise ValueError(
+            f"frame must have shape (height, width, 3), got {frame.shape}"
+        )
+    if frame.shape[0] == 0 or frame.shape[1] == 0:
+        raise ValueError("frame height and width must be greater than zero")
+    if frame.dtype != np.uint8:
+        raise TypeError(f"frame dtype must be uint8, got {frame.dtype}")
 
 
 class PersonDetector:
@@ -65,6 +102,7 @@ class PersonDetector:
         iou_threshold: Optional[float] = None,
         input_size: Optional[int] = None,
         device: Optional[str] = None,
+        model: Optional[Any] = None,
     ) -> None:
         if model_name not in _SUPPORTED_MODELS:
             raise ValueError(
@@ -73,21 +111,37 @@ class PersonDetector:
 
         cfg = _load_config(model_name)
         self._model_name = model_name
-        self._conf = (
+        confidence = (
             confidence_threshold
             if confidence_threshold is not None
             else cfg.get("confidence_threshold", 0.4)
         )
-        self._iou = iou_threshold if iou_threshold is not None else cfg.get("iou_threshold", 0.5)
-        self._input_size = input_size if input_size is not None else cfg.get("input_size", 640)
+        iou = iou_threshold if iou_threshold is not None else cfg.get("iou_threshold", 0.5)
+        image_size = input_size if input_size is not None else cfg.get("input_size", 640)
+        self._conf = _validate_threshold("confidence_threshold", confidence)
+        self._iou = _validate_threshold("iou_threshold", iou)
+        self._input_size = _validate_input_size(image_size)
 
         cfg_device = cfg.get("device", "auto")
         selected_device = device if device is not None else cfg_device
+        if not isinstance(selected_device, str) or not selected_device.strip():
+            raise ValueError("device must be a non-empty string")
+        selected_device = selected_device.strip()
         self._device: Optional[str] = None if selected_device == "auto" else selected_device
 
-        from ultralytics import YOLO
-
-        self._model = YOLO(_weight_name(model_name, cfg))
+        if model is not None:
+            if not callable(getattr(model, "predict", None)):
+                raise TypeError("model must provide a callable predict() method")
+            self._model = model
+        else:
+            try:
+                from ultralytics import YOLO
+            except ImportError as exc:
+                raise ImportError(
+                    "PersonDetector requires Ultralytics and its runtime dependencies. "
+                    "Install the project dependencies with 'pip install -r requirements.txt'."
+                ) from exc
+            self._model = YOLO(_weight_name(model_name, cfg))
 
     # ------------------------------------------------------------------
     # Public API
@@ -104,6 +158,7 @@ class PersonDetector:
             List of PersonDetection sorted by descending confidence.
             Empty list when no persons are detected.
         """
+        _validate_frame(frame)
         results = self._model.predict(
             source=frame,
             conf=self._conf,
@@ -142,4 +197,3 @@ class PersonDetector:
     def reset(self) -> None:
         """No persistent state to clear; provided for API consistency."""
         pass
-

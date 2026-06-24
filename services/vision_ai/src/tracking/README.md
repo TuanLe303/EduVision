@@ -1,6 +1,8 @@
 # Tracking Module
 
-Multi-object tracking that assigns a persistent `track_id` to each detected person across frames.
+Multi-object tracking that assigns the canonical persistent `track_id` to each
+detected person across frames. Downstream modules reuse this ID for behavior,
+identity, object, and seat results.
 
 ---
 
@@ -72,19 +74,12 @@ for frame in video_stream:
 tracker.reset()
 ```
 
-Run as a standalone test against a video file:
+The end-to-end pipeline calls `update(frame)` once and uses these IDs for every
+downstream task. Behavior YOLO only predicts boxes/classes; Hungarian matching
+attaches those predictions to the canonical IDs here.
 
-```bash
-python -m services.vision_ai.src.tracking.src.tracker --source path/to/video.mp4 --tracker bytetrack
-python -m services.vision_ai.src.tracking.src.tracker --source path/to/video.mp4 --tracker botsort
-```
-
-Override device:
-
-```bash
-python -m services.vision_ai.src.tracking.src.tracker --source 0 --tracker bytetrack --device cpu
-python -m services.vision_ai.src.tracking.src.tracker --source 0 --tracker bytetrack --device cuda:0
-```
+The tracker is designed to run as part of the end-to-end Vision AI pipeline.
+Use `python -m services.vision_ai.src.main` to start that pipeline.
 
 ---
 

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
-
 
 @dataclass
 class TrackResult:
@@ -19,6 +19,30 @@ _SUPPORTED_TRACKERS = ("bytetrack", "botsort")
 # configs/services/tracking/ relative to project root (EduVision/)
 # __file__ is at services/vision_ai/src/tracking/src/tracker.py → parents[5] = EduVision/
 _CONFIGS_DIR = Path(__file__).resolve().parents[5] / "configs" / "services" / "tracking"
+
+
+def _validate_threshold(name: str, value: Any) -> float:
+    """Validate a confidence/IoU threshold and return it as a float."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a number in [0, 1]")
+    value = float(value)
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"{name} must be in [0, 1], got {value}")
+    return value
+
+
+def _validate_frame(frame: np.ndarray) -> None:
+    """Fail early with a clear error when a frame is not a BGR uint8 image."""
+    if not isinstance(frame, np.ndarray):
+        raise TypeError("frame must be a NumPy array")
+    if frame.ndim != 3 or frame.shape[2] != 3:
+        raise ValueError(
+            f"frame must have shape (height, width, 3), got {frame.shape}"
+        )
+    if frame.shape[0] == 0 or frame.shape[1] == 0:
+        raise ValueError("frame height and width must be greater than zero")
+    if frame.dtype != np.uint8:
+        raise TypeError(f"frame dtype must be uint8, got {frame.dtype}")
 
 
 def _resolve_config(tracker: str) -> str:
@@ -58,20 +82,51 @@ class Tracker:
         self,
         model_name: str = "yolo11n",
         tracker: str = "bytetrack",
-        confidence_threshold: float = 0.4,
-        iou_threshold: float = 0.5,
-        device: str = "auto",
+        confidence_threshold: Optional[float] = None,
+        iou_threshold: Optional[float] = None,
+        input_size: Optional[int] = None,
+        device: Optional[str] = None,
     ) -> None:
+        if not isinstance(model_name, str) or not model_name.strip():
+            raise ValueError("model_name must be a non-empty string")
+        model_name = model_name.strip()
+
+        if not isinstance(tracker, str):
+            raise TypeError("tracker must be a string")
         if tracker not in _SUPPORTED_TRACKERS:
             raise ValueError(
                 f"tracker must be one of {list(_SUPPORTED_TRACKERS)}, got '{tracker}'"
             )
 
+        configured_confidence = 0.1
+        configured_iou = 0.5
+        configured_input_size = 640
+        selected_device = device if device is not None else "auto"
+        if not isinstance(selected_device, str) or not selected_device.strip():
+            raise ValueError("device must be a non-empty string")
+        selected_device = selected_device.strip()
+
+        selected_input_size = input_size if input_size is not None else configured_input_size
+        if isinstance(selected_input_size, bool) or not isinstance(selected_input_size, int):
+            raise TypeError("input_size must be a positive integer")
+        if selected_input_size <= 0:
+            raise ValueError("input_size must be greater than zero")
+
         self._tracker_cfg = _resolve_config(tracker)
-        self._conf = confidence_threshold
-        self._iou = iou_threshold
+        self._conf = _validate_threshold(
+            "confidence_threshold",
+            confidence_threshold
+            if confidence_threshold is not None
+            else configured_confidence,
+        )
+        self._iou = _validate_threshold(
+            "iou_threshold", iou_threshold if iou_threshold is not None else configured_iou
+        )
+        self._input_size = selected_input_size
         # Ultralytics accepts None to mean "auto-select"
-        self._device: Optional[str] = None if device == "auto" else device
+        self._device: Optional[str] = (
+            None if selected_device == "auto" else selected_device
+        )
         from ultralytics import YOLO
 
         self._model = YOLO(f"{model_name}.pt")
@@ -91,19 +146,21 @@ class Tracker:
             List of TrackResult.  Empty list when no persons are tracked
             or when the tracker has not yet assigned IDs (e.g. first frame).
         """
+        _validate_frame(frame)
+
         results = self._model.track(
             source=frame,
             persist=True,           # keep track state across calls
             tracker=self._tracker_cfg,
             conf=self._conf,
             iou=self._iou,
+            imgsz=self._input_size,
             classes=[0],            # COCO class 0 = person
             device=self._device,
             verbose=False,
         )
 
         tracks: List[TrackResult] = []
-
         for result in results:
             boxes = result.boxes
             if boxes is None or boxes.id is None:
@@ -113,16 +170,19 @@ class Tracker:
             ids   = boxes.id.int().cpu().numpy()
             bboxes = boxes.xyxy.cpu().numpy()
             confs  = boxes.conf.cpu().numpy()
-
+            if not (len(ids) == len(bboxes) == len(confs)):
+                raise RuntimeError(
+                    "tracking result returned different numbers of IDs, boxes, and scores"
+                )
             for track_id, bbox, conf in zip(ids, bboxes, confs):
+                normalized_track_id = int(track_id)
                 tracks.append(
                     TrackResult(
-                        track_id=int(track_id),
+                        track_id=normalized_track_id,
                         bbox=bbox.tolist(),
                         confidence=float(conf),
                     )
                 )
-
         return tracks
 
     def reset(self) -> None:

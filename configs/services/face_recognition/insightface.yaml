@@ -1,7 +1,16 @@
 model: buffalo_s
 input_size: [640, 640]
+embedding_image_size: 112
 similarity_threshold: 0.35
-device: cpu
-providers:
-  - CPUExecutionProvider
+device: auto                 # prefer CUDA, fall back to CPU
 
+# Track-level identity stabilization
+confirmation_hits: 3
+history_size: 5
+switch_margin: 0.08
+identity_cache_frames: 30
+
+# Enrollment quality checks
+min_brightness: 20
+max_brightness: 235
+min_blur_score: 20
