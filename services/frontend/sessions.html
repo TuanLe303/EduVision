@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EduVision — Phiên học</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+  .nav-item { transition:background 0.15s; }
+  .nav-item:hover { background:rgba(255,255,255,0.08); }
+  .nav-item.active { background:rgba(99,102,241,0.25); border-left:3px solid #6366f1; }
+  .table-row:hover { background:rgba(99,102,241,0.06); cursor:pointer; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:500; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex h-screen overflow-hidden">
+
+<!-- SIDEBAR (same as dashboard) -->
+<aside class="w-60 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+  <div class="p-5 border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <span class="text-lg font-bold text-white">EduVision</span>
+    </div>
+  </div>
+  <nav class="flex-1 p-3 space-y-1">
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="#" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-indigo-300 text-sm font-medium cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Phiên học
+    </a>
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Báo cáo
+    </a>
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Sinh viên
+    </a>
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Cài đặt
+    </a>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+    <div>
+      <h1 class="text-base font-semibold text-white">Phiên học</h1>
+      <p class="text-xs text-slate-500">Tất cả phiên giám sát đã ghi</p>
+    </div>
+    <button class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Phiên mới
+    </button>
+  </header>
+
+  <div class="flex-1 overflow-auto p-6">
+
+    <!-- Stats summary -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <p class="text-xs text-slate-400">Tổng phiên học</p>
+        <p class="text-2xl font-bold text-white mt-1">48</p>
+        <p class="text-xs text-slate-500 mt-1">Tháng 6/2026</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <p class="text-xs text-slate-400">Chú ý TB</p>
+        <p class="text-2xl font-bold text-indigo-400 mt-1">71%</p>
+        <p class="text-xs text-green-400 mt-1">↑ +3% so tháng trước</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <p class="text-xs text-slate-400">Điểm danh TB</p>
+        <p class="text-2xl font-bold text-green-400 mt-1">89%</p>
+        <p class="text-xs text-slate-500 mt-1">28.5 / 32 SV mỗi buổi</p>
+      </div>
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <p class="text-xs text-slate-400">Báo cáo đã tạo</p>
+        <p class="text-2xl font-bold text-amber-400 mt-1">43</p>
+        <p class="text-xs text-slate-500 mt-1">5 chưa có báo cáo</p>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex-1 relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Tìm kiếm phiên học..." class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500" />
+      </div>
+      <select class="bg-slate-800 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+        <option>Tất cả lớp</option>
+        <option>DPL302m – Nhóm A</option>
+        <option>DPL302m – Nhóm B</option>
+      </select>
+      <input type="date" value="2026-06-01" class="bg-slate-800 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" />
+      <span class="text-slate-600">→</span>
+      <input type="date" value="2026-06-24" class="bg-slate-800 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" />
+    </div>
+
+    <!-- Table -->
+    <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-slate-700">
+            <th class="text-left px-4 py-3 text-xs text-slate-400 font-medium">Ngày / Giờ</th>
+            <th class="text-left px-4 py-3 text-xs text-slate-400 font-medium">Lớp học</th>
+            <th class="text-left px-4 py-3 text-xs text-slate-400 font-medium">Thời lượng</th>
+            <th class="text-left px-4 py-3 text-xs text-slate-400 font-medium">Sinh viên</th>
+            <th class="text-left px-4 py-3 text-xs text-slate-400 font-medium">Chú ý TB</th>
+            <th class="text-left px-4 py-3 text-xs text-slate-400 font-medium">Trạng thái</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/50">
+
+          <tr class="table-row transition-colors">
+            <td class="px-4 py-3">
+              <p class="text-sm font-medium text-white">24/06/2026</p>
+              <p class="text-xs text-slate-500">07:30 – 09:07</p>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-300">DPL302m – Nhóm A</td>
+            <td class="px-4 py-3 text-sm text-slate-300">1h 37m</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-white">28</span>
+                <span class="text-xs text-slate-500">/ 32</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full ml-1">
+                  <div class="h-full bg-green-500 rounded-full" style="width:87.5%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-indigo-400">73%</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full">
+                  <div class="h-full bg-indigo-500 rounded-full" style="width:73%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge bg-green-900/40 text-green-400 border border-green-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>Có báo cáo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Xem →</button>
+            </td>
+          </tr>
+
+          <tr class="table-row transition-colors">
+            <td class="px-4 py-3">
+              <p class="text-sm font-medium text-white">22/06/2026</p>
+              <p class="text-xs text-slate-500">07:30 – 09:15</p>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-300">DPL302m – Nhóm B</td>
+            <td class="px-4 py-3 text-sm text-slate-300">1h 45m</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-white">30</span>
+                <span class="text-xs text-slate-500">/ 32</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full ml-1">
+                  <div class="h-full bg-green-500 rounded-full" style="width:93.75%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-indigo-400">81%</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full">
+                  <div class="h-full bg-indigo-500 rounded-full" style="width:81%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge bg-green-900/40 text-green-400 border border-green-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>Có báo cáo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Xem →</button>
+            </td>
+          </tr>
+
+          <tr class="table-row transition-colors">
+            <td class="px-4 py-3">
+              <p class="text-sm font-medium text-white">20/06/2026</p>
+              <p class="text-xs text-slate-500">13:00 – 14:50</p>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-300">DPL302m – Nhóm A</td>
+            <td class="px-4 py-3 text-sm text-slate-300">1h 50m</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-white">25</span>
+                <span class="text-xs text-slate-500">/ 32</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full ml-1">
+                  <div class="h-full bg-amber-500 rounded-full" style="width:78%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-amber-400">64%</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full">
+                  <div class="h-full bg-amber-500 rounded-full" style="width:64%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge bg-green-900/40 text-green-400 border border-green-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>Có báo cáo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Xem →</button>
+            </td>
+          </tr>
+
+          <tr class="table-row transition-colors">
+            <td class="px-4 py-3">
+              <p class="text-sm font-medium text-white">18/06/2026</p>
+              <p class="text-xs text-slate-500">07:30 – 09:20</p>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-300">DPL302m – Nhóm B</td>
+            <td class="px-4 py-3 text-sm text-slate-300">1h 50m</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-white">29</span>
+                <span class="text-xs text-slate-500">/ 32</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full ml-1">
+                  <div class="h-full bg-green-500 rounded-full" style="width:90%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-indigo-400">77%</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full">
+                  <div class="h-full bg-indigo-500 rounded-full" style="width:77%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge bg-amber-900/40 text-amber-400 border border-amber-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Chưa có báo cáo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Xem →</button>
+            </td>
+          </tr>
+
+          <tr class="table-row transition-colors">
+            <td class="px-4 py-3">
+              <p class="text-sm font-medium text-white">16/06/2026</p>
+              <p class="text-xs text-slate-500">13:00 – 14:45</p>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-300">DPL302m – Nhóm A</td>
+            <td class="px-4 py-3 text-sm text-slate-300">1h 45m</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-white">32</span>
+                <span class="text-xs text-slate-500">/ 32</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full ml-1">
+                  <div class="h-full bg-green-500 rounded-full" style="width:100%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-green-400">88%</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full">
+                  <div class="h-full bg-green-500 rounded-full" style="width:88%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge bg-green-900/40 text-green-400 border border-green-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>Có báo cáo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Xem →</button>
+            </td>
+          </tr>
+
+          <tr class="table-row transition-colors">
+            <td class="px-4 py-3">
+              <p class="text-sm font-medium text-white">14/06/2026</p>
+              <p class="text-xs text-slate-500">07:30 – 09:05</p>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-300">DPL302m – Nhóm B</td>
+            <td class="px-4 py-3 text-sm text-slate-300">1h 35m</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-white">26</span>
+                <span class="text-xs text-slate-500">/ 32</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full ml-1">
+                  <div class="h-full bg-amber-500 rounded-full" style="width:81%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-red-400">58%</span>
+                <div class="w-16 h-1.5 bg-slate-700 rounded-full">
+                  <div class="h-full bg-red-500 rounded-full" style="width:58%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge bg-green-900/40 text-green-400 border border-green-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>Có báo cáo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Xem →</button>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="border-t border-slate-700 px-4 py-3 flex items-center justify-between">
+        <p class="text-xs text-slate-500">Hiển thị 1–6 / 48 phiên học</p>
+        <div class="flex items-center gap-1">
+          <button class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white text-sm flex items-center justify-center transition-colors">‹</button>
+          <button class="w-8 h-8 rounded-lg bg-indigo-600 text-white text-sm flex items-center justify-center">1</button>
+          <button class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white text-sm flex items-center justify-center transition-colors">2</button>
+          <button class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white text-sm flex items-center justify-center transition-colors">3</button>
+          <span class="text-slate-600 text-sm px-1">...</span>
+          <button class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white text-sm flex items-center justify-center transition-colors">8</button>
+          <button class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white text-sm flex items-center justify-center transition-colors">›</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EduVision — Sinh viên</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+  .nav-item { transition:background 0.15s; }
+  .nav-item:hover { background:rgba(255,255,255,0.08); }
+  .nav-item.active { background:rgba(99,102,241,0.25); border-left:3px solid #6366f1; }
+  .card:hover { border-color:#6366f1; transform:translateY(-1px); transition:all 0.15s; }
+  .card { transition:all 0.15s; }
+  .modal-backdrop { background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); }
+  .upload-area { border:2px dashed #334155; transition:border-color 0.15s; }
+  .upload-area:hover { border-color:#6366f1; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex h-screen overflow-hidden">
+
+<!-- SIDEBAR -->
+<aside class="w-60 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+  <div class="p-5 border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <span class="text-lg font-bold text-white">EduVision</span>
+    </div>
+  </div>
+  <nav class="flex-1 p-3 space-y-1">
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Phiên học
+    </a>
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Báo cáo
+    </a>
+    <a href="#" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-indigo-300 text-sm font-medium cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Sinh viên
+    </a>
+    <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 text-sm cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Cài đặt
+    </a>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+    <div>
+      <h1 class="text-base font-semibold text-white">Sinh viên</h1>
+      <p class="text-xs text-slate-500">Quản lý đăng ký nhận diện khuôn mặt</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-slate-300 text-sm px-3 py-2 rounded-lg hover:bg-slate-700">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Import CSV
+      </button>
+      <button class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Đăng ký sinh viên
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 overflow-auto p-6">
+
+    <!-- Search & filter -->
+    <div class="flex items-center gap-3 mb-6">
+      <div class="flex-1 relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Tìm theo tên hoặc MSSV..." class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500" />
+      </div>
+      <select class="bg-slate-800 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+        <option>Tất cả trạng thái</option>
+        <option>Đã đăng ký</option>
+        <option>Chưa đăng ký</option>
+      </select>
+      <div class="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg p-1">
+        <button class="w-8 h-8 rounded-md bg-slate-700 flex items-center justify-center text-slate-300">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button class="w-8 h-8 rounded-md flex items-center justify-center text-slate-500 hover:text-slate-300">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Student grid -->
+    <div class="grid grid-cols-4 gap-4">
+
+      <!-- Enrolled students -->
+      <div class="card bg-slate-800 rounded-2xl border border-slate-700 p-5 cursor-pointer">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-700 flex items-center justify-center text-2xl font-bold text-white">NV</div>
+          <span class="text-xs bg-green-900/40 text-green-400 border border-green-800/50 px-2 py-0.5 rounded-full">Đã đăng ký</span>
+        </div>
+        <p class="text-sm font-semibold text-white">Nguyễn Văn A</p>
+        <p class="text-xs text-slate-500 mt-0.5">SV001 · DPL302m</p>
+        <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-2 gap-2">
+          <div>
+            <p class="text-xs text-slate-500">Chú ý TB</p>
+            <p class="text-sm font-bold text-indigo-400">89%</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">Phiên học</p>
+            <p class="text-sm font-bold text-white">12</p>
+          </div>
+        </div>
+        <div class="mt-3 flex gap-1">
+          <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 overflow-hidden flex items-center justify-center text-xs text-slate-400">👤</div>
+          <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 overflow-hidden flex items-center justify-center text-xs text-slate-400">👤</div>
+          <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 overflow-hidden flex items-center justify-center text-xs text-slate-400">👤</div>
+          <div class="w-6 h-6 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center text-xs text-indigo-400 font-medium">+2</div>
+        </div>
+      </div>
+
+      <div class="card bg-slate-800 rounded-2xl border border-slate-700 p-5 cursor-pointer">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-16 h-16 rounded-2xl bg-teal-700 flex items-center justify-center text-2xl font-bold text-white">TT</div>
+          <span class="text-xs bg-green-900/40 text-green-400 border border-green-800/50 px-2 py-0.5 rounded-full">Đã đăng ký</span>
+        </div>
+        <p class="text-sm font-semibold text-white">Trần Thị B</p>
+        <p class="text-xs text-slate-500 mt-0.5">SV002 · DPL302m</p>
+        <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-2 gap-2">
+          <div>
+            <p class="text-xs text-slate-500">Chú ý TB</p>
+            <p class="text-sm font-bold text-indigo-400">82%</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">Phiên học</p>
+            <p class="text-sm font-bold text-white">12</p>
+          </div>
+        </div>
+        <div class="mt-3 flex gap-1">
+          <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-xs text-slate-400">👤</div>
+          <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-xs text-slate-400">👤</div>
+          <div class="w-6 h-6 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center text-xs text-indigo-400 font-medium">+3</div>
+        </div>
+      </div>
+
+      <div class="card bg-slate-800 rounded-2xl border border-red-900/40 p-5 cursor-pointer">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-16 h-16 rounded-2xl bg-rose-800 flex items-center justify-center text-2xl font-bold text-white">LM</div>
+          <span class="text-xs bg-green-900/40 text-green-400 border border-green-800/50 px-2 py-0.5 rounded-full">Đã đăng ký</span>
+        </div>
+        <p class="text-sm font-semibold text-white">Lê Minh C</p>
+        <p class="text-xs text-slate-500 mt-0.5">SV003 · DPL302m</p>
+        <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-2 gap-2">
+          <div>
+            <p class="text-xs text-slate-500">Chú ý TB</p>
+            <p class="text-sm font-bold text-red-400">41%</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">Phiên học</p>
+            <p class="text-sm font-bold text-white">11</p>
+          </div>
+        </div>
+        <div class="mt-3">
+          <span class="text-xs text-red-400 bg-red-950/50 border border-red-900/50 px-2 py-0.5 rounded-full">⚠ Cần chú ý</span>
+        </div>
+      </div>
+
+      <div class="card bg-slate-800 rounded-2xl border border-slate-700 p-5 cursor-pointer">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-16 h-16 rounded-2xl bg-amber-700 flex items-center justify-center text-2xl font-bold text-white">PH</div>
+          <span class="text-xs bg-green-900/40 text-green-400 border border-green-800/50 px-2 py-0.5 rounded-full">Đã đăng ký</span>
+        </div>
+        <p class="text-sm font-semibold text-white">Phạm Hương D</p>
+        <p class="text-xs text-slate-500 mt-0.5">SV004 · DPL302m</p>
+        <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-2 gap-2">
+          <div>
+            <p class="text-xs text-slate-500">Chú ý TB</p>
+            <p class="text-sm font-bold text-amber-400">63%</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">Phiên học</p>
+            <p class="text-sm font-bold text-white">10</p>
+          </div>
+        </div>
+        <div class="mt-3 flex gap-1">
+          <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-xs text-slate-400">👤</div>
+          <div class="w-6 h-6 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center text-xs text-indigo-400 font-medium">+4</div>
+        </div>
+      </div>
+
+      <!-- Unregistered student -->
+      <div class="card bg-slate-800/50 rounded-2xl border border-dashed border-slate-700 p-5 cursor-pointer opacity-70 hover:opacity-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-16 h-16 rounded-2xl bg-slate-700 flex items-center justify-center">
+            <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+          </div>
+          <span class="text-xs bg-slate-700 text-slate-400 px-2 py-0.5 rounded-full">Chưa đăng ký</span>
+        </div>
+        <p class="text-sm font-semibold text-slate-300">Hoàng Nam E</p>
+        <p class="text-xs text-slate-500 mt-0.5">SV005 · DPL302m</p>
+        <button class="mt-4 w-full text-xs text-indigo-400 border border-indigo-800/60 rounded-lg py-1.5 hover:bg-indigo-900/30 transition-colors">
+          + Đăng ký ngay
+        </button>
+      </div>
+
+      <div class="card bg-slate-800 rounded-2xl border border-slate-700 p-5 cursor-pointer">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-800 flex items-center justify-center text-2xl font-bold text-white">VL</div>
+          <span class="text-xs bg-green-900/40 text-green-400 border border-green-800/50 px-2 py-0.5 rounded-full">Đã đăng ký</span>
+        </div>
+        <p class="text-sm font-semibold text-white">Vũ Lan F</p>
+        <p class="text-xs text-slate-500 mt-0.5">SV006 · DPL302m</p>
+        <div class="mt-3 pt-3 border-t border-slate-700 grid grid-cols-2 gap-2">
+          <div>
+            <p class="text-xs text-slate-500">Chú ý TB</p>
+            <p class="text-sm font-bold text-green-400">91%</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">Phiên học</p>
+            <p class="text-sm font-bold text-white">12</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add new card -->
+      <div class="rounded-2xl border border-dashed border-slate-700 p-5 cursor-pointer hover:border-indigo-500 hover:bg-indigo-950/10 transition-all flex flex-col items-center justify-center gap-3 min-h-[200px]">
+        <div class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+          <svg class="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <p class="text-sm text-slate-500">Thêm sinh viên</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ENROLLMENT MODAL (shown as overlay) -->
+<div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl w-[480px] p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-semibold text-white">Đăng ký sinh viên mới</h2>
+      <button class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1.5">Họ và tên</label>
+          <input type="text" placeholder="Nguyễn Văn A" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 placeholder-slate-600" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1.5">MSSV</label>
+          <input type="text" placeholder="SV001" class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 placeholder-slate-600" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Lớp học</label>
+        <select class="w-full bg-slate-800 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+          <option>DPL302m – Nhóm A</option>
+          <option>DPL302m – Nhóm B</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Ảnh khuôn mặt <span class="text-slate-600">(tối thiểu 3 ảnh, góc độ khác nhau)</span></label>
+        <div class="upload-area rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer">
+          <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          <p class="text-sm text-slate-400">Kéo thả ảnh vào đây hoặc <span class="text-indigo-400">chọn file</span></p>
+          <p class="text-xs text-slate-600">JPG, PNG · Tối đa 5MB mỗi ảnh</p>
+        </div>
+        <!-- Preview thumbnails -->
+        <div class="flex gap-2 mt-2">
+          <div class="w-16 h-16 bg-slate-700 rounded-lg border border-green-600 flex items-center justify-center text-slate-400 relative">
+            👤
+            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+              <svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+          <div class="w-16 h-16 bg-slate-700 rounded-lg border border-green-600 flex items-center justify-center text-slate-400 relative">
+            👤
+            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+              <svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+          <div class="w-16 h-16 bg-slate-700/50 rounded-lg border border-dashed border-slate-600 flex items-center justify-center text-slate-600 text-xl">+</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      <button class="flex-1 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-medium py-2 rounded-lg hover:bg-slate-700">Hủy</button>
+      <button class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg transition-colors">Đăng ký</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
