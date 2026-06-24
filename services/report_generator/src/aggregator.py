@@ -5,16 +5,18 @@ import json
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
 
 _BEHAVIOR_STATES = (
     "focused",
     "drowsy",
+    "sleeping",
     "using_phone",
     "off_task",
     "away_from_seat",
     "side_talking",
+    "raising_hand",
 )
 
 
@@ -55,6 +57,17 @@ def aggregate_jsonl(path: str | Path, min_present_frames: int = 5) -> SessionSum
     by ``services.vision_ai.src.main``.
     """
     path = Path(path)
+    with path.open(encoding="utf-8") as f:
+        return aggregate_frames(
+            (json.loads(line) for line in f if line.strip()),
+            min_present_frames=min_present_frames,
+        )
+
+
+def aggregate_frames(
+    frames: Iterable[dict], min_present_frames: int = 5
+) -> SessionSummary:
+    """Aggregate in-memory frame records at the pre-report pipeline boundary."""
 
     # Per-track accumulators
     behavior_counts: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -66,52 +79,53 @@ def aggregate_jsonl(path: str | Path, min_present_frames: int = 5) -> SessionSum
     start_ts: Optional[float] = None
     end_ts: Optional[float] = None
 
-    with path.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
+    for frame in frames:
+        total_frames += 1
+
+        ts = frame.get("timestamp")
+        if ts is not None:
+            if start_ts is None or ts < start_ts:
+                start_ts = ts
+            if end_ts is None or ts > end_ts:
+                end_ts = ts
+
+        # Collect student names from recognition results
+        for str_track_id, rec in frame.get("recognition", {}).items():
+            if rec is None:
+                continue
+            tid = int(str_track_id)
+            sid = rec.get("student_id")
+            name = rec.get("name")
+            if sid and (student_ids.get(tid) is None):
+                student_ids[tid] = sid
+            if name and (student_names.get(tid) is None):
+                student_names[tid] = name
+
+        # final_behavior is the public result after temporal gating and seat
+        # priority. Fall back for old JSONL files produced before it existed.
+        behaviors = frame.get("final_behavior")
+        if behaviors is None:
+            behaviors = frame.get("behavior", [])
+        for behavior in behaviors:
+            track_id = behavior.get("track_id")
+            if track_id is None:
                 continue
 
-            frame = json.loads(line)
-            total_frames += 1
+            state = behavior.get("state")
+            if state not in _BEHAVIOR_STATES:
+                continue
+            behavior_counts[track_id][state] += 1
 
-            ts = frame.get("timestamp")
-            if ts is not None:
-                if start_ts is None or ts < start_ts:
-                    start_ts = ts
-                if end_ts is None or ts > end_ts:
-                    end_ts = ts
+            # Fall back to student_id embedded in behavior record
+            if track_id not in student_ids:
+                student_ids[track_id] = behavior.get("student_id")
+            elif student_ids[track_id] is None:
+                sid = behavior.get("student_id")
+                if sid:
+                    student_ids[track_id] = sid
 
-            # Collect student names from recognition results
-            for str_track_id, rec in frame.get("recognition", {}).items():
-                if rec is None:
-                    continue
-                tid = int(str_track_id)
-                sid = rec.get("student_id")
-                name = rec.get("name")
-                if sid and (student_ids.get(tid) is None):
-                    student_ids[tid] = sid
-                if name and (student_names.get(tid) is None):
-                    student_names[tid] = name
-
-            for behavior in frame.get("behavior", []):
-                track_id = behavior.get("track_id")
-                if track_id is None:
-                    continue
-
-                state = behavior.get("state", "unknown")
-                behavior_counts[track_id][state] += 1
-
-                # Fall back to student_id embedded in behavior record
-                if track_id not in student_ids:
-                    student_ids[track_id] = behavior.get("student_id")
-                elif student_ids[track_id] is None:
-                    sid = behavior.get("student_id")
-                    if sid:
-                        student_ids[track_id] = sid
-
-                for event in behavior.get("events", []):
-                    events_by_track[track_id].append(event)
+            for event in behavior.get("events", []):
+                events_by_track[track_id].append(event)
 
     students: list[StudentSummary] = []
     all_attention: list[float] = []
@@ -127,7 +141,7 @@ def aggregate_jsonl(path: str | Path, min_present_frames: int = 5) -> SessionSum
             state: counts.get(state, 0) / total for state in _BEHAVIOR_STATES
         }
         dominant = max(counts, key=lambda k: counts[k]) if counts else "unknown"
-        attention = fractions.get("focused", 0.0)
+        attention = fractions.get("focused", 0.0) + fractions.get("raising_hand", 0.0)
 
         all_attention.append(attention)
         for state, count in counts.items():

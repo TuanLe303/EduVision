@@ -12,6 +12,7 @@ class _AliasLabelModel:
         3: "using_phone",
         4: "off_task",
         5: "side_taliking",
+        6: "raising_hand",
     }
 
     def predict(self, **kwargs):

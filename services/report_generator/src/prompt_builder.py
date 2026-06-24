@@ -6,19 +6,23 @@ from .aggregator import SessionSummary
 _BEHAVIOR_LABELS_VI: dict[str, str] = {
     "focused": "Tập trung",
     "drowsy": "Buồn ngủ / Ngủ gật",
+    "sleeping": "Ngủ",
     "using_phone": "Dùng điện thoại",
     "off_task": "Mất tập trung",
     "away_from_seat": "Rời chỗ ngồi",
     "side_talking": "Nói chuyện riêng",
+    "raising_hand": "Giơ tay phát biểu",
 }
 
 _BEHAVIOR_LABELS_EN: dict[str, str] = {
     "focused": "Focused",
     "drowsy": "Drowsy / Falling asleep",
+    "sleeping": "Sleeping",
     "using_phone": "Using phone",
     "off_task": "Off-task",
     "away_from_seat": "Away from seat",
     "side_talking": "Side-talking",
+    "raising_hand": "Raising hand",
 }
 
 
