@@ -32,7 +32,6 @@ def main() -> None:
     parser = build_parser()
     parser.description = "Benchmark the complete EduVision vision pipeline."
     parser.add_argument("--metrics-output", type=Path, required=True)
-    parser.add_argument("--max-frames", type=int, default=0)
     parser.add_argument("--warmup-frames", type=int, default=5)
     args = parser.parse_args()
 

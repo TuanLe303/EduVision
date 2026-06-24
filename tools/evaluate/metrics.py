@@ -26,6 +26,12 @@ class _Frame:
     labels: dict[str, str]
     attendees: set[str]
     person_count: int
+    boxes: tuple[tuple[float, float, float, float], ...] = ()
+    boxes_complete: bool = False
+    boxed_labels: tuple[tuple[tuple[float, float, float, float], str], ...] = ()
+    count_complete: bool = True
+    boxed_labels_complete: bool = True
+    identity_complete: bool = True
 
 
 @dataclass(frozen=True)
@@ -42,6 +48,8 @@ def evaluate_records(
     *,
     fps: Optional[float] = None,
     event_iou_threshold: float = 0.5,
+    bbox_iou_threshold: float = 0.5,
+    behavior_output: str = "final",
     runtime_seconds: Optional[float] = None,
     video_duration_seconds: Optional[float] = None,
     peak_ram_mb: Optional[float] = None,
@@ -55,11 +63,15 @@ def evaluate_records(
     """
     predictions = list(prediction_records)
     ground_truth = list(ground_truth_records)
-    pred_by_index = _normalize_predictions(predictions, fps)
+    if behavior_output not in {"final", "frame"}:
+        raise ValueError("behavior_output must be 'final' or 'frame'")
+    pred_by_index = _normalize_predictions(predictions, fps, behavior_output)
     gt_by_index = _normalize_ground_truth(ground_truth, fps)
-    frame_indices = sorted(set(pred_by_index) | set(gt_by_index))
+    # Ground truth is the evaluation mask. A prediction on an unannotated
+    # frame is unknown, not a false positive.
+    frame_indices = sorted(gt_by_index)
     if not frame_indices:
-        raise ValueError("prediction and ground-truth inputs are both empty")
+        raise ValueError("ground-truth input is empty")
 
     pred_frames: list[_Frame] = []
     gt_frames: list[_Frame] = []
@@ -73,12 +85,40 @@ def evaluate_records(
         )
 
     attendance = _attendance_metrics(pred_frames, gt_frames)
+    identity = _identity_metrics(pred_frames, gt_frames)
     behavior = _behavior_metrics(pred_frames, gt_frames)
     frame_seconds = _frame_seconds(gt_frames, pred_frames, fps)
-    events = _event_metrics(pred_frames, gt_frames, frame_seconds, event_iou_threshold)
+    dense_ground_truth = len(frame_indices) >= 2 and all(
+        current == previous + 1
+        for previous, current in zip(frame_indices, frame_indices[1:])
+    )
+    complete_event_labels = all(
+        set(frame.labels) == frame.attendees for frame in gt_frames
+    )
+    events = (
+        {
+            "available": True,
+            **_event_metrics(
+                pred_frames, gt_frames, frame_seconds, event_iou_threshold
+            ),
+        }
+        if dense_ground_truth and complete_event_labels
+        else {
+            "available": False,
+            "reason": (
+                "event metrics require a state for every student on at least "
+                "two consecutive annotated frames"
+            ),
+        }
+    )
+    detection = _detection_metrics(pred_frames, gt_frames, bbox_iou_threshold)
+    bbox_behavior = _bbox_behavior_metrics(
+        pred_frames, gt_frames, bbox_iou_threshold
+    )
     count_errors = [
         abs(pred.person_count - truth.person_count)
         for pred, truth in zip(pred_frames, gt_frames)
+        if truth.count_complete
     ]
     processing_ms = [
         float(record["processing_ms"])
@@ -96,16 +136,34 @@ def evaluate_records(
 
     return {
         "evaluated_frames": len(frame_indices),
+        "ignored_unannotated_prediction_frames": len(set(pred_by_index) - set(gt_by_index)),
+        "evaluation_scope": "ground_truth_frames_only",
         "attendance": attendance,
+        "student_identity": identity,
         "student_behavior": behavior,
+        "person_detection": detection,
+        "bbox_behavior": bbox_behavior,
         "events": events,
-        "student_count_mae": _mean(count_errors),
+        "student_count_mae": _mean(count_errors) if count_errors else None,
+        "student_count": {
+            "available": bool(count_errors),
+            "mae": _mean(count_errors) if count_errors else None,
+            "evaluated_frames": len(count_errors),
+        },
+        "frame_results": _frame_results(pred_frames, gt_frames, bbox_iou_threshold),
         "performance": performance,
-        "settings": {"event_iou_threshold": event_iou_threshold, "fps": fps},
+        "settings": {
+            "event_iou_threshold": event_iou_threshold,
+            "bbox_iou_threshold": bbox_iou_threshold,
+            "behavior_output": behavior_output,
+            "fps": fps,
+        },
     }
 
 
-def _normalize_predictions(records: Sequence[dict[str, Any]], fps: Optional[float]) -> dict[int, _Frame]:
+def _normalize_predictions(
+    records: Sequence[dict[str, Any]], fps: Optional[float], behavior_output: str
+) -> dict[int, _Frame]:
     track_identity: dict[int, str] = {}
     output: dict[int, _Frame] = {}
     for position, record in enumerate(records):
@@ -138,7 +196,54 @@ def _normalize_predictions(records: Sequence[dict[str, Any]], fps: Optional[floa
 
         tracks = record.get("tracks", [])
         person_count = len(tracks) if isinstance(tracks, list) else len(labels)
-        output[frame_index] = _Frame(frame_index, timestamp, labels, attendees, person_count)
+        boxes = tuple(
+            box for item in tracks
+            if isinstance(item, dict) and (box := _box(item.get("bbox"))) is not None
+        ) if isinstance(tracks, list) else ()
+        frame_behavior = record.get("frame_behavior", [])
+        if behavior_output == "frame":
+            boxed_labels = tuple(
+                (box, str(item["state"]))
+                for item in frame_behavior
+                if isinstance(item, dict)
+                and item.get("state") in BEHAVIOR_STATES
+                and (box := _box(item.get("bbox"))) is not None
+            )
+        else:
+            final_states_by_track = {
+                int(item["track_id"]): str(item["state"])
+                for item in record.get("final_behavior", [])
+                if item.get("track_id") is not None
+                and item.get("state") in BEHAVIOR_STATES
+            }
+            boxed_labels = tuple(
+                (box, final_states_by_track[int(item["track_id"])])
+                for item in frame_behavior
+                if isinstance(item, dict)
+                and item.get("track_id") is not None
+                and int(item["track_id"]) in final_states_by_track
+                and (box := _box(item.get("bbox"))) is not None
+            )
+            located_tracks = {
+                int(item["track_id"])
+                for item in frame_behavior
+                if isinstance(item, dict)
+                and item.get("track_id") is not None
+                and _box(item.get("bbox")) is not None
+            }
+            boxed_labels += tuple(
+                (box, final_states_by_track[int(item["track_id"])])
+                for item in tracks
+                if isinstance(item, dict)
+                and item.get("track_id") is not None
+                and int(item["track_id"]) in final_states_by_track
+                and int(item["track_id"]) not in located_tracks
+                and (box := _box(item.get("bbox"))) is not None
+            ) if isinstance(tracks, list) else ()
+        output[frame_index] = _Frame(
+            frame_index, timestamp, labels, attendees, person_count, boxes,
+            boxed_labels=boxed_labels,
+        )
     return output
 
 
@@ -164,17 +269,48 @@ def _normalize_ground_truth(records: Sequence[dict[str, Any]], fps: Optional[flo
             sid for sid in (_clean_id(value) for value in record.get("attendance", [])) if sid
         )
         person_count = int(record.get("person_count", len(items)))
-        output[frame_index] = _Frame(frame_index, timestamp, labels, attendees, person_count)
+        boxes = tuple(
+            box for item in items
+            if isinstance(item, dict) and (box := _box(item.get("bbox"))) is not None
+        )
+        anonymous_behavior = record.get("annotation_type") == "anonymous_bbox_behavior"
+        boxes_complete = len(boxes) == person_count and not anonymous_behavior
+        boxed_labels = tuple(
+            (box, str(item["state"]))
+            for item in items
+            if isinstance(item, dict)
+            and item.get("state") in BEHAVIOR_STATES
+            and (box := _box(item.get("bbox"))) is not None
+        )
+        output[frame_index] = _Frame(
+            frame_index=frame_index,
+            timestamp=timestamp,
+            labels=labels,
+            attendees=attendees,
+            person_count=person_count,
+            boxes=boxes,
+            boxes_complete=boxes_complete,
+            boxed_labels=boxed_labels,
+            count_complete=bool(record.get("person_count_complete", not anonymous_behavior)),
+            boxed_labels_complete=bool(record.get("box_annotation_complete", True)),
+            identity_complete=not anonymous_behavior,
+        )
     return output
 
 
 def _attendance_metrics(predictions: Sequence[_Frame], ground_truth: Sequence[_Frame]) -> dict[str, Any]:
     predicted = set().union(*(frame.attendees for frame in predictions))
     expected = set().union(*(frame.attendees for frame in ground_truth))
+    if not all(frame.identity_complete for frame in ground_truth):
+        return {
+            "available": False,
+            "reason": "ground truth does not contain student IDs",
+        }
     tp = len(predicted & expected)
     fp = len(predicted - expected)
     fn = len(expected - predicted)
     return {
+        "available": bool(expected),
         **_prf(tp, fp, fn),
         "predicted_students": sorted(predicted),
         "ground_truth_students": sorted(expected),
@@ -184,13 +320,36 @@ def _attendance_metrics(predictions: Sequence[_Frame], ground_truth: Sequence[_F
     }
 
 
+def _identity_metrics(
+    predictions: Sequence[_Frame], ground_truth: Sequence[_Frame]
+) -> dict[str, Any]:
+    if not all(frame.identity_complete for frame in ground_truth):
+        return {
+            "available": False,
+            "reason": "ground truth does not contain student IDs",
+        }
+    tp = fp = fn = 0
+    for pred, truth in zip(predictions, ground_truth):
+        tp += len(pred.attendees & truth.attendees)
+        fp += len(pred.attendees - truth.attendees)
+        fn += len(truth.attendees - pred.attendees)
+    return {
+        "available": any(frame.attendees for frame in ground_truth),
+        **_prf(tp, fp, fn),
+        "true_positive": tp,
+        "false_positive": fp,
+        "false_negative": fn,
+        "unit": "student-frame",
+    }
+
+
 def _behavior_metrics(predictions: Sequence[_Frame], ground_truth: Sequence[_Frame]) -> dict[str, Any]:
     per_class: dict[str, dict[str, Any]] = {}
     for state in BEHAVIOR_STATES:
         tp = fp = fn = 0
         for pred, truth in zip(predictions, ground_truth):
-            student_ids = set(pred.labels) | set(truth.labels)
-            for student_id in student_ids:
+            # A missing GT state means "not annotated", not a negative label.
+            for student_id in truth.labels:
                 pred_positive = pred.labels.get(student_id) == state
                 true_positive = truth.labels.get(student_id) == state
                 tp += int(pred_positive and true_positive)
@@ -200,7 +359,235 @@ def _behavior_metrics(predictions: Sequence[_Frame], ground_truth: Sequence[_Fra
 
     supported = [item for item in per_class.values() if item["support"] > 0]
     macro_f1 = _mean([item["f1"] for item in supported])
-    return {"macro_f1": macro_f1, "per_class": per_class, "supported_classes": len(supported)}
+    confusion: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for pred, truth in zip(predictions, ground_truth):
+        for student_id, expected in truth.labels.items():
+            predicted = pred.labels.get(student_id, "__missing__")
+            confusion[expected][predicted] += 1
+    return {
+        "available": bool(supported),
+        "macro_f1": macro_f1,
+        "per_class": per_class,
+        "supported_classes": len(supported),
+        "confusion_matrix": {
+            expected: dict(sorted(row.items())) for expected, row in sorted(confusion.items())
+        },
+    }
+
+
+def _bbox_behavior_metrics(
+    predictions: Sequence[_Frame], ground_truth: Sequence[_Frame], iou_threshold: float
+) -> dict[str, Any]:
+    gt_count = sum(len(frame.boxed_labels) for frame in ground_truth)
+    if gt_count == 0 or any(
+        len(frame.boxed_labels) != len(frame.boxes) for frame in ground_truth
+    ):
+        return {
+            "available": False,
+            "reason": "every ground-truth bbox needs a behavior state",
+        }
+
+    totals = {state: {"tp": 0, "fp": 0, "fn": 0} for state in BEHAVIOR_STATES}
+    confusion: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    matched_count = correct_count = 0
+    for pred, truth in zip(predictions, ground_truth):
+        pred_boxes = tuple(box for box, _ in pred.boxed_labels)
+        truth_boxes = tuple(box for box, _ in truth.boxed_labels)
+        matches = _match_boxes(pred_boxes, truth_boxes, iou_threshold)
+        matched_pred = {pred_index for pred_index, _, _ in matches}
+        matched_truth = {truth_index for _, truth_index, _ in matches}
+
+        for pred_index, truth_index, _ in matches:
+            predicted = pred.boxed_labels[pred_index][1]
+            expected = truth.boxed_labels[truth_index][1]
+            matched_count += 1
+            confusion[expected][predicted] += 1
+            if predicted == expected:
+                correct_count += 1
+                totals[expected]["tp"] += 1
+            else:
+                totals[predicted]["fp"] += 1
+                totals[expected]["fn"] += 1
+
+        for pred_index, (_, predicted) in enumerate(pred.boxed_labels):
+            if pred_index not in matched_pred and truth.boxed_labels_complete:
+                totals[predicted]["fp"] += 1
+                confusion["__none__"][predicted] += 1
+        for truth_index, (_, expected) in enumerate(truth.boxed_labels):
+            if truth_index not in matched_truth:
+                totals[expected]["fn"] += 1
+                confusion[expected]["__missing__"] += 1
+
+    per_class: dict[str, dict[str, Any]] = {}
+    for state, counts in totals.items():
+        per_class[state] = {
+            **_prf(counts["tp"], counts["fp"], counts["fn"]),
+            "support": counts["tp"] + counts["fn"],
+        }
+    supported = [item for item in per_class.values() if item["support"] > 0]
+    return {
+        "available": True,
+        "end_to_end_accuracy": correct_count / gt_count,
+        "correct_end_to_end_count": correct_count,
+        "accuracy_on_matched_boxes": (
+            correct_count / matched_count if matched_count else 0.0
+        ),
+        "macro_f1": _mean([item["f1"] for item in supported]),
+        "matched_box_count": matched_count,
+        "ground_truth_box_count": gt_count,
+        "annotation_scope": (
+            "complete_frames"
+            if all(frame.boxed_labels_complete for frame in ground_truth)
+            else "annotated_boxes_only"
+        ),
+        "per_class": per_class,
+        "confusion_matrix": {
+            expected: dict(sorted(row.items()))
+            for expected, row in sorted(confusion.items())
+        },
+        "iou_threshold": iou_threshold,
+    }
+
+
+def _detection_metrics(
+    predictions: Sequence[_Frame], ground_truth: Sequence[_Frame], iou_threshold: float
+) -> dict[str, Any]:
+    # Do not silently score a partially box-annotated data set.
+    if not any(frame.boxes for frame in ground_truth) or not all(
+        frame.boxes_complete for frame in ground_truth
+    ):
+        return {
+            "available": False,
+            "reason": "every ground-truth student needs an xyxy bbox",
+        }
+    tp = fp = fn = 0
+    matched_ious: list[float] = []
+    for pred, truth in zip(predictions, ground_truth):
+        matches = _match_boxes(pred.boxes, truth.boxes, iou_threshold)
+        tp += len(matches)
+        fp += len(pred.boxes) - len(matches)
+        fn += len(truth.boxes) - len(matches)
+        matched_ious.extend(iou for _, _, iou in matches)
+    return {
+        "available": True,
+        **_prf(tp, fp, fn),
+        "true_positive": tp,
+        "false_positive": fp,
+        "false_negative": fn,
+        "mean_matched_iou": _mean(matched_ious),
+        "iou_threshold": iou_threshold,
+    }
+
+
+def _frame_results(
+    predictions: Sequence[_Frame], ground_truth: Sequence[_Frame], iou_threshold: float
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for pred, truth in zip(predictions, ground_truth):
+        expected_ids = set(truth.attendees)
+        predicted_ids = set(pred.attendees)
+        behavior_correct: list[dict[str, str]] = []
+        behavior_errors: list[dict[str, Optional[str]]] = []
+        for student_id in sorted(truth.labels):
+            expected = truth.labels[student_id]
+            predicted = pred.labels.get(student_id)
+            item = {
+                "student_id": student_id,
+                "expected": expected,
+                "predicted": predicted,
+            }
+            if expected is not None and expected == predicted:
+                behavior_correct.append({"student_id": student_id, "state": expected})
+            else:
+                behavior_errors.append(item)
+        item: dict[str, Any] = {
+            "frame_index": truth.frame_index,
+            "timestamp": truth.timestamp,
+            "attendance": (
+                {
+                    "available": True,
+                    "correct": sorted(expected_ids & predicted_ids),
+                    "false_positive": sorted(predicted_ids - expected_ids),
+                    "false_negative": sorted(expected_ids - predicted_ids),
+                }
+                if truth.identity_complete
+                else {"available": False}
+            ),
+            "behavior_correct": behavior_correct,
+            "behavior_errors": behavior_errors,
+            "person_count": (
+                {
+                    "available": True,
+                    "expected": truth.person_count,
+                    "predicted": pred.person_count,
+                    "absolute_error": abs(pred.person_count - truth.person_count),
+                }
+                if truth.count_complete
+                else {"available": False}
+            ),
+        }
+        if truth.boxes_complete and truth.boxes:
+            matches = _match_boxes(pred.boxes, truth.boxes, iou_threshold)
+            item["detection"] = {
+                "true_positive": len(matches),
+                "false_positive": len(pred.boxes) - len(matches),
+                "false_negative": len(truth.boxes) - len(matches),
+                "matched_ious": [iou for _, _, iou in matches],
+            }
+        if truth.boxed_labels:
+            pred_boxes = tuple(box for box, _ in pred.boxed_labels)
+            truth_boxes = tuple(box for box, _ in truth.boxed_labels)
+            matches = _match_boxes(pred_boxes, truth_boxes, iou_threshold)
+            matched_truth = {truth_index for _, truth_index, _ in matches}
+            comparisons = [
+                {
+                    "expected": truth.boxed_labels[truth_index][1],
+                    "predicted": pred.boxed_labels[pred_index][1],
+                    "iou": iou,
+                    "correct": (
+                        truth.boxed_labels[truth_index][1]
+                        == pred.boxed_labels[pred_index][1]
+                    ),
+                }
+                for pred_index, truth_index, iou in matches
+            ]
+            item["bbox_behavior"] = {
+                "matched": comparisons,
+                "missing_ground_truth": [
+                    truth.boxed_labels[index][1]
+                    for index in range(len(truth.boxed_labels))
+                    if index not in matched_truth
+                ],
+            }
+        results.append(item)
+    return results
+
+
+def _match_boxes(
+    predictions: Sequence[tuple[float, float, float, float]],
+    ground_truth: Sequence[tuple[float, float, float, float]],
+    threshold: float,
+) -> list[tuple[int, int, float]]:
+    candidates = sorted(
+        (
+            (_bbox_iou(pred_box, truth_box), pred_index, truth_index)
+            for pred_index, pred_box in enumerate(predictions)
+            for truth_index, truth_box in enumerate(ground_truth)
+        ),
+        reverse=True,
+    )
+    used_predictions: set[int] = set()
+    used_truth: set[int] = set()
+    matches: list[tuple[int, int, float]] = []
+    for iou, pred_index, truth_index in candidates:
+        if iou < threshold:
+            break
+        if pred_index in used_predictions or truth_index in used_truth:
+            continue
+        used_predictions.add(pred_index)
+        used_truth.add(truth_index)
+        matches.append((pred_index, truth_index, iou))
+    return matches
 
 
 def _event_metrics(
@@ -300,6 +687,28 @@ def _clean_id(value: Any) -> Optional[str]:
     if value in {None, "", "unknown"}:
         return None
     return str(value)
+
+
+def _box(value: Any) -> Optional[tuple[float, float, float, float]]:
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        return None
+    box = tuple(float(coordinate) for coordinate in value)
+    if box[2] <= box[0] or box[3] <= box[1]:
+        return None
+    return box
+
+
+def _bbox_iou(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> float:
+    intersection_width = max(0.0, min(first[2], second[2]) - max(first[0], second[0]))
+    intersection_height = max(0.0, min(first[3], second[3]) - max(first[1], second[1]))
+    intersection = intersection_width * intersection_height
+    first_area = (first[2] - first[0]) * (first[3] - first[1])
+    second_area = (second[2] - second[0]) * (second[3] - second[1])
+    union = first_area + second_area - intersection
+    return intersection / union if union > 0 else 0.0
 
 
 def _timestamp(record: dict[str, Any], frame_index: int, fps: Optional[float]) -> float:
