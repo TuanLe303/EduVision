@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-slate-950 text-slate-200 font-sans; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded; }
+}
+
+@layer components {
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold tracking-wide;
+  }
+  .badge-focused  { @apply bg-green-950  text-green-400; }
+  .badge-drowsy   { @apply bg-orange-950 text-amber-400; }
+  .badge-phone    { @apply bg-red-950    text-red-400; }
+  .badge-offtask  { @apply bg-orange-950 text-orange-400; }
+  .badge-away     { @apply bg-slate-800  text-slate-400; }
+  .badge-talking  { @apply bg-purple-950 text-purple-400; }
+
+  .card { @apply bg-slate-900 border border-slate-800 rounded-xl; }
+  .input-field {
+    @apply bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5
+           text-sm text-slate-200 outline-none focus:border-indigo-500 transition-colors;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
+           px-3.5 py-1.5 rounded-lg border-none cursor-pointer transition-colors;
+  }
+  .btn-secondary {
+    @apply bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium
+           px-3.5 py-1.5 rounded-lg border border-slate-700 cursor-pointer transition-colors;
+  }
+  .btn-danger {
+    @apply bg-red-950 text-red-300 text-sm font-medium
+           px-3.5 py-1.5 rounded-lg border-none cursor-pointer;
+  }
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer
+           text-slate-400 text-sm font-medium transition-all;
+  }
+  .nav-item:hover { @apply bg-slate-800 text-slate-200; }
+  .nav-item.active { @apply bg-indigo-950 text-indigo-300; }
+  .sec-title {
+    @apply text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2;
+  }
+  .stat-card { @apply bg-slate-900 border border-slate-800 rounded-xl p-3.5; }
+  .progress-bar { @apply h-1.5 rounded-full bg-slate-800 overflow-hidden; }
+  .progress-fill { @apply h-full rounded-full transition-all duration-500; }
+  .tab-btn {
+    @apply px-3.5 py-1.5 rounded-lg text-sm font-medium cursor-pointer
+           text-slate-500 bg-transparent border-none transition-all;
+  }
+  .tab-btn.active { @apply bg-slate-800 text-slate-200; }
+}

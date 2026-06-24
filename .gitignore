@@ -39,5 +39,12 @@ Thumbs.db
 # Memory file
 mem.md
 
+# Environment / secrets — NEVER commit these
+.env
+.env.*
+
+# Node.js
+node_modules/
+
 # Keep folder structure tracked (place .gitkeep inside folders to track them)
 !**/.gitkeep
