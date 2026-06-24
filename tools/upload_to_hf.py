@@ -77,35 +77,29 @@ def dry_run(pairs: list[tuple[Path, str, str]]) -> None:
     print(f"\n  Total: {len(pairs)} files, {total_mb:.1f} MB")
 
 
-def upload(api: HfApi, repo_id: str, pairs: list[tuple[Path, str, str]]) -> None:
-    """Upload all files with progress reporting."""
-    total = len(pairs)
-    ok = 0
-    errors = []
-
-    for i, (local, hf_path, folder_label) in enumerate(pairs, 1):
-        size_mb = local.stat().st_size / 1_048_576
-        print(f"  [{i:3d}/{total}] {folder_label}/{local.name:<40} ({size_mb:.2f} MB)", end=" ")
+def upload(api: HfApi, repo_id: str, folders: list[tuple[str, str]]) -> None:
+    """Upload entire folders using api.upload_folder to avoid rate limits."""
+    ignore = ["*.mov", "*.mp4", "*.avi", "*.MOV", "*.MP4", "*.pt", "*.pth", "*.onnx", "**/__pycache__/*", "**/.DS_Store", "**/Thumbs.db"]
+    
+    for local_rel, hf_prefix in folders:
+        local_dir = PROJECT_ROOT / local_rel
+        if not local_dir.exists():
+            print(f"  [WARN] Folder not found, skipping: {local_rel}")
+            continue
+            
+        print(f"  Uploading folder '{local_rel}' to '{hf_prefix}/' in {repo_id}...")
         try:
-            api.upload_file(
-                path_or_fileobj=str(local),
-                path_in_repo=hf_path,
+            api.upload_folder(
+                folder_path=str(local_dir),
+                path_in_repo=hf_prefix,
                 repo_id=repo_id,
                 repo_type="dataset",
-                commit_message=f"Upload {hf_path}",
+                commit_message=f"Upload folder {hf_prefix}",
+                ignore_patterns=ignore
             )
-            print("OK")
-            ok += 1
+            print("  -> OK")
         except Exception as e:
-            print(f"ERROR: {e}")
-            errors.append((hf_path, str(e)))
-
-    print(f"\n  Uploaded: {ok}/{total} files")
-    if errors:
-        print(f"  Errors ({len(errors)}):")
-        for path, err in errors:
-            print(f"    {path}: {err}")
-
+            print(f"  [ERROR] Failed to upload {local_rel}: {e}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -123,7 +117,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--dry-run", action="store_true",
-        help="Preview files without uploading"
+        help="Preview files without uploading (Not fully supported with upload_folder, but will list folders)"
     )
     parser.add_argument(
         "--folder", choices=["raw_frames", "annotated", "dataset", "all"],
@@ -137,7 +131,7 @@ def main() -> None:
     args = parse_args()
 
     print("-" * 60)
-    print("  EduVision -- HuggingFace Upload")
+    print("  EduVision -- HuggingFace Upload (Folder Mode)")
     print("-" * 60)
     print(f"  Repo   : {args.repo}")
     print(f"  Mode   : {'DRY RUN' if args.dry_run else 'UPLOAD'}")
@@ -148,34 +142,16 @@ def main() -> None:
     if args.folder != "all":
         folders = [(l, h) for l, h in UPLOAD_FOLDERS if h == args.folder]
 
-    # Collect all files
-    all_pairs = []  # (local_path, hf_path, folder_label)
-    for local_rel, hf_prefix in folders:
-        local_dir = PROJECT_ROOT / local_rel
-        if not local_dir.exists():
-            print(f"  [WARN] Folder not found, skipping: {local_rel}")
-            continue
-        files = collect_files(local_dir)
-        for local, rel in files:
-            hf_path = rel  # keeps data/raw_frames/... structure under repo root
-            all_pairs.append((local, hf_path, hf_prefix))
-        print(f"  [{hf_prefix}]  {len(files)} files found")
-
-    if not all_pairs:
-        print("\n[ERROR] No files found to upload.")
-        sys.exit(1)
-
-    total_mb = sum(f.stat().st_size / 1_048_576 for f, _, _ in all_pairs)
-    print(f"\n  Total: {len(all_pairs)} files, {total_mb:.1f} MB\n")
-
     if args.dry_run:
-        dry_run(all_pairs)
+        print("  DRY RUN: The following folders would be uploaded:")
+        for local_rel, hf_prefix in folders:
+            print(f"    - {local_rel} -> {hf_prefix}/")
+        print("\n  Note: To see exact files, run without --dry-run. upload_folder handles this automatically.")
         return
 
     if not args.token:
         print("[ERROR] --token is required for upload. Get it from:")
         print("  https://huggingface.co/settings/tokens")
-        print("  (Create a token with 'Write' permission)")
         sys.exit(1)
 
     # Login
@@ -188,9 +164,7 @@ def main() -> None:
         sys.exit(1)
 
     api = HfApi()
-
-    print(f"  Uploading {len(all_pairs)} files to {args.repo} ...\n")
-    upload(api, args.repo, all_pairs)
+    upload(api, args.repo, folders)
 
     print(f"\n  Done! View at: https://huggingface.co/datasets/{args.repo}")
     print("-" * 60)
