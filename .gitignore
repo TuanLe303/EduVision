@@ -43,3 +43,4 @@ mem.md
 
 # Keep folder structure tracked (place .gitkeep inside folders to track them)
 !**/.gitkeep
+Reports/

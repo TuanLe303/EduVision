@@ -387,6 +387,10 @@ def parse_args() -> argparse.Namespace:
         help="Only include Ambient Intelligence data"
     )
     parser.add_argument(
+        "--out-dir", type=str, default=str(OUTPUT_ROOT),
+        help="Output directory for merged data"
+    )
+    parser.add_argument(
         "--clean", action="store_true", default=True,
         help="Remove existing merged data before merging (default: True)"
     )
@@ -395,21 +399,26 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    
+    output_path = Path(args.out_dir).resolve()
 
     print("-" * 60)
     print("  EduVision -- Dataset Merge Tool")
     print("-" * 60)
-    print(f"  Output : {OUTPUT_ROOT.relative_to(PROJECT_ROOT)}")
+    print(f"  Output : {output_path}")
     print()
 
     # Clean output
-    if args.clean and OUTPUT_ROOT.exists():
-        shutil.rmtree(OUTPUT_ROOT)
+    if args.clean and output_path.exists():
+        shutil.rmtree(output_path)
 
-    images_out = OUTPUT_ROOT / "images"
-    labels_out = OUTPUT_ROOT / "labels"
+    images_out = output_path / "images"
+    labels_out = output_path / "labels"
     images_out.mkdir(parents=True, exist_ok=True)
     labels_out.mkdir(parents=True, exist_ok=True)
+    
+    global OUTPUT_ROOT
+    OUTPUT_ROOT = output_path
 
     t0 = time.time()
     ev_stats = {"wide_shot": {"images": 0, "labels": 0, "detections": 0},

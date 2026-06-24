@@ -88,10 +88,10 @@ def split_list(items: list, train_r: float, val_r: float, seed: int):
     return train, val, test
 
 
-def copy_pairs(pairs: list[tuple[Path, Path]], split: str) -> int:
+def copy_pairs(pairs: list[tuple[Path, Path]], split_path: Path) -> int:
     """Copy image+label pairs to the output split directory."""
-    img_out = OUTPUT_ROOT / split / "images"
-    lbl_out = OUTPUT_ROOT / split / "labels"
+    img_out = split_path / "images"
+    lbl_out = split_path / "labels"
     img_out.mkdir(parents=True, exist_ok=True)
     lbl_out.mkdir(parents=True, exist_ok=True)
     for img, lbl in pairs:
@@ -100,14 +100,14 @@ def copy_pairs(pairs: list[tuple[Path, Path]], split: str) -> int:
     return len(pairs)
 
 
-def write_yaml(nc: int, class_names: list[str]) -> None:
+def write_yaml(output_path: Path, nc: int, class_names: list[str]) -> None:
     """Write the final dataset.yaml for YOLO training."""
-    yaml_path = OUTPUT_ROOT / "dataset.yaml"
+    yaml_path = output_path / "dataset.yaml"
     lines = [
         "# EduVision -- YOLO Training Dataset",
         f"# Split: train/val/test",
         "",
-        f"path: {OUTPUT_ROOT.as_posix()}",
+        f"path: {output_path.as_posix()}",
         "train: train/images",
         "val:   val/images",
         "test:  test/images",
@@ -122,7 +122,7 @@ def write_yaml(nc: int, class_names: list[str]) -> None:
     print(f"  [DONE] dataset.yaml -> {yaml_path.relative_to(PROJECT_ROOT)}")
 
 
-def print_summary(counts: dict, total: int, train_r: float, val_r: float) -> None:
+def print_summary(output_path: Path, counts: dict, total: int, train_r: float, val_r: float) -> None:
     test_r = 1.0 - train_r - val_r
     print("\n" + "-" * 60)
     print("  DATASET SPLIT SUMMARY")
@@ -137,7 +137,7 @@ def print_summary(counts: dict, total: int, train_r: float, val_r: float) -> Non
         print(f"  {split:8s}  {n:4d} frames  ({pct:.1f}%)  {bar}")
     print()
     print("  To start training (YOLO26):")
-    print(f"    yolo train data={OUTPUT_ROOT.as_posix()}/dataset.yaml")
+    print(f"    yolo train data={output_path.as_posix()}/dataset.yaml")
     print( "                   model=yolo26n.pt epochs=50 imgsz=640")
     print()
     print("  To verify dataset:")
@@ -153,7 +153,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="EduVision -- Split annotated dataset into train/val/test.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
     )
     parser.add_argument(
         "--ratio", nargs=3, type=float, default=[70, 20, 10],
@@ -165,15 +164,33 @@ def parse_args() -> argparse.Namespace:
         help="Random seed for reproducibility (default: 42)"
     )
     parser.add_argument(
-        "--source", type=Path, default=None,
-        help="Source data dir with images/ and labels/ subdirs. "
-             "Default: data/merged/ if exists, else data/annotated/wide_shot/"
+        "--input-dir", type=str, default=str(MERGED_ROOT if MERGED_ROOT.exists() else ANNOTATED_ROOT),
+        help="Input directory containing merged data"
+    )
+    parser.add_argument(
+        "--output-dir", type=str, default=str(OUTPUT_ROOT),
+        help="Output directory for split dataset"
     )
     parser.add_argument(
         "--stratify", action="store_true", default=True,
         help="Stratify by camera angle prefix (default: True)"
     )
     return parser.parse_args()
+
+
+def get_source_dirs(input_dir: str):
+    """
+    Returns (images_dir, labels_dir).
+    """
+    input_path = Path(input_dir).resolve()
+    images_dir = input_path / "images"
+    labels_dir = input_path / "labels"
+    
+    if images_dir.exists() and labels_dir.exists():
+        return images_dir, labels_dir
+        
+    print(f"[ERROR] {input_path} does not exist or missing images/labels")
+    sys.exit(1)
 
 
 def main() -> None:
@@ -187,30 +204,19 @@ def main() -> None:
     train_r = train_pct / 100
     val_r   = val_pct   / 100
 
-    # Determine source directory
-    if args.source is not None:
-        source = args.source
-    elif MERGED_ROOT.exists() and (MERGED_ROOT / "images").exists():
-        source = MERGED_ROOT
-    elif ANNOTATED_ROOT.exists() and (ANNOTATED_ROOT / "images").exists():
-        source = ANNOTATED_ROOT
-    else:
-        print("[ERROR] No dataset found. Run one of:")
-        print("  python tools/merge_datasets.py   (recommended)")
-        print("  python tools/auto_annotate.py     (EduVision data only)")
-        sys.exit(1)
+    input_path = Path(args.input_dir).resolve()
+    output_path = Path(args.output_dir).resolve()
 
     print("-" * 60)
     print("  EduVision -- Dataset Split Tool")
     print("-" * 60)
-    print(f"  Source : {source.relative_to(PROJECT_ROOT)}")
-    print(f"  Output : {OUTPUT_ROOT.relative_to(PROJECT_ROOT)}")
+    print(f"  Source : {input_path}")
+    print(f"  Output : {output_path}")
     print(f"  Ratio  : {train_pct:.0f}/{val_pct:.0f}/{test_pct:.0f}")
     print(f"  Seed   : {args.seed}")
     print()
 
-    images_dir = source / "images"
-    labels_dir = source / "labels"
+    images_dir, labels_dir = get_source_dirs(args.input_dir)
 
     if not images_dir.exists():
         print(f"[ERROR] Images dir not found: {images_dir}")
@@ -224,9 +230,9 @@ def main() -> None:
     print(f"  Found {len(all_pairs)} annotated pairs")
 
     # Clean output
-    if OUTPUT_ROOT.exists():
-        shutil.rmtree(OUTPUT_ROOT)
-    OUTPUT_ROOT.mkdir(parents=True)
+    if output_path.exists():
+        shutil.rmtree(output_path)
+    output_path.mkdir(parents=True)
 
     if args.stratify:
         # Group by camera angle (prefix before __)
@@ -246,14 +252,14 @@ def main() -> None:
         train_all, val_all, test_all = split_list(all_pairs, train_r, val_r, args.seed)
 
     print()
-    n_train = copy_pairs(train_all, "train")
+    n_train = copy_pairs(train_all, output_path / "train")
     print(f"  Copied {n_train} pairs -> train/")
-    n_val   = copy_pairs(val_all,   "val")
+    n_val   = copy_pairs(val_all,   output_path / "val")
     print(f"  Copied {n_val}   pairs -> val/")
-    n_test  = copy_pairs(test_all,  "test")
+    n_test  = copy_pairs(test_all,  output_path / "test")
     print(f"  Copied {n_test}  pairs -> test/")
 
-    write_yaml(len(BEHAVIOR_CLASSES), BEHAVIOR_CLASSES)
+    write_yaml(output_path, len(BEHAVIOR_CLASSES), BEHAVIOR_CLASSES)
 
     # Save split report
     report = {
@@ -262,11 +268,12 @@ def main() -> None:
         "counts": {"train": n_train, "val": n_val, "test": n_test},
         "total": len(all_pairs),
     }
-    report_path = OUTPUT_ROOT / "split_report.json"
+    report_path = output_path / "split_report.json"
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 
     print_summary(
+        output_path,
         {"train": n_train, "val": n_val, "test": n_test},
         len(all_pairs),
         train_r, val_r,
