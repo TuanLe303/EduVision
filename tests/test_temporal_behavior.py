@@ -6,6 +6,7 @@ def test_normalizes_existing_dataset_typos() -> None:
 
     assert aggregator.normalize_state("focus") == "focused"
     assert aggregator.normalize_state("side_taliking") == "side_talking"
+    assert aggregator.normalize_state("raising_hand") == "raising_hand"
 
 
 def test_does_not_publish_state_before_temporal_window_is_ready() -> None:

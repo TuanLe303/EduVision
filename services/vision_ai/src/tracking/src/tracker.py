@@ -14,7 +14,7 @@ class TrackResult:
     confidence: float
 
 
-_SUPPORTED_TRACKERS = ("bytetrack", "botsort")
+_SUPPORTED_TRACKERS = ("bytetrack", "bytetrack_classroom", "botsort")
 
 # configs/services/tracking/ relative to project root (EduVision/)
 # __file__ is at services/vision_ai/src/tracking/src/tracker.py → parents[5] = EduVision/

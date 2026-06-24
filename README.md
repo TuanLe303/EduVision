@@ -45,7 +45,7 @@ flowchart TD
         FD["3. Face Detection\nSCRFD · RetinaFace"]
         FR["4. Face Recognition / Attendance\nbuffalo_s · buffalo_l · ArcFace"]
         OD["5. Object Detection — off-task\nphone · laptop · book · bottle"]
-        BD["6. Behavior Detection\nCustom YOLO\nfocused · drowsy · sleeping\nusing_phone · off_task · side_talking"]
+        BD["6. Behavior Detection\nCustom YOLO\nfocused · drowsy · sleeping\nusing_phone · off_task · side_talking · raising_hand"]
         TA["7. Temporal Aggregation\nPer-track window · hysteresis"]
         SM["8. Seat Monitor\nFixed camera · identity · seat ROI\naway_from_seat"]
         BA["9. Final Behavior\nTemporal behavior + seat priority"]
@@ -166,6 +166,7 @@ priority rules, and hysteresis.
 | `using_phone` | Sustained model prediction or associated phone detection |
 | `off_task` | Sustained off-task prediction |
 | `side_talking` | Sustained side-talking prediction |
+| `raising_hand` | Sustained hand-raising / classroom participation prediction |
 | `away_from_seat` | Fixed-camera seat monitor confirms the student elsewhere while the assigned seat remains empty |
 
 Behavior thresholds are configured in
@@ -282,6 +283,24 @@ cp configs/.env.example configs/.env
 ## 7. Running the Demo
 
 > **Note:** Full demo is currently under development. The steps below describe the intended workflow.
+
+### Local E2E harness (stops before report generation)
+
+The Streamlit harness accepts an uploaded video or a camera index, runs the
+Vision AI pipeline, displays annotated frames, and exports both frame-level
+JSONL and the aggregated session JSON consumed by the report generator. It does
+not start a backend, database, report LLM, or production frontend.
+
+```powershell
+uv sync
+uv run streamlit run services/streamlit_demo.py
+```
+
+The custom behavior model defaults to `weights/behavior_yolo26n.pt`. The
+selected person detector (for example official `yolo26n.pt`) is a separate COCO
+model used for person tracking and may be downloaded by Ultralytics on first
+run. For a quick CPU smoke test, keep object detection disabled, choose CPU,
+and limit the run to 30-100 frames.
 
 ```bash
 # Activate virtual environment first
