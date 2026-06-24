@@ -24,7 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--detector", default="yolo11n", choices=["yolo11n", "yolo11s","yolo26n","yolo26s"])
     parser.add_argument(
         "--behavior-model",
-        default="models/behavior_yolo.pt",
+        default="weights/behavior_yolo26n.pt",
         help="Path to custom YOLO weights trained on student behavior classes.",
     )
     parser.add_argument(
@@ -33,7 +33,23 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Override the temporal window size N from behavior config.",
     )
-    parser.add_argument("--tracker", default="bytetrack", choices=["bytetrack", "botsort"])
+    parser.add_argument(
+        "--tracker",
+        default="bytetrack",
+        choices=["bytetrack", "bytetrack_classroom", "botsort"],
+    )
+    parser.add_argument(
+        "--person-input-size",
+        type=int,
+        default=640,
+        help="Person detector image size. Use 1280 for distant students in Full HD classroom video.",
+    )
+    parser.add_argument(
+        "--person-confidence",
+        type=float,
+        default=0.10,
+        help="Minimum person detection confidence passed into the tracker.",
+    )
     parser.add_argument(
         "--enable-face",
         action="store_true",
@@ -79,6 +95,8 @@ class VisionPipeline:
         self._tracker = Tracker(
             model_name=args.detector,
             tracker=args.tracker,
+            confidence_threshold=args.person_confidence,
+            input_size=args.person_input_size,
             device=args.device,
         )
         self._behavior_detector = BehaviorDetector(
@@ -340,13 +358,16 @@ def _state_color(state: str) -> tuple[int, int, int]:
         return (0, 0, 255)
     if state in {"drowsy", "off_task", "side_talking"}:
         return (0, 165, 255)
+    if state == "raising_hand":
+        return (255, 180, 0)
     return (0, 200, 0)
 
 
 def run(args: argparse.Namespace) -> int:
     import cv2
 
-    capture = cv2.VideoCapture(_source_value(args.source))
+    source = _source_value(args.source)
+    capture = cv2.VideoCapture(source)
     if not capture.isOpened():
         print(f"Failed to open video source: {args.source}", file=sys.stderr)
         return 2
@@ -354,6 +375,7 @@ def run(args: argparse.Namespace) -> int:
     pipeline = VisionPipeline(args)
     output_handle = None
     video_writer = None
+    show_enabled = bool(args.show)
     if args.output_jsonl:
         output_path = Path(args.output_jsonl)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -382,10 +404,16 @@ def run(args: argparse.Namespace) -> int:
 
             frame_index += 1
             media_timestamp_ms = float(capture.get(cv2.CAP_PROP_POS_MSEC))
-            timestamp = media_timestamp_ms / 1000.0 if media_timestamp_ms > 0 else time()
+            # File timestamps start at 0. Using wall-clock time for only that
+            # first frame would make the session duration billions of seconds.
+            timestamp = (
+                time()
+                if isinstance(source, int) or str(source).lower().startswith(("rtsp://", "http://", "https://"))
+                else max(0.0, media_timestamp_ms / 1000.0)
+            )
             result = pipeline.process_frame(frame, frame_index, timestamp)
             line = json.dumps(result, ensure_ascii=False)
-            annotated = annotate_frame(frame, result) if args.show or video_writer is not None else None
+            annotated = annotate_frame(frame, result) if show_enabled or video_writer is not None else None
 
             if args.print_every > 0 and frame_index % args.print_every == 0:
                 print(line)
@@ -393,10 +421,18 @@ def run(args: argparse.Namespace) -> int:
                 output_handle.write(line + "\n")
             if video_writer is not None and annotated is not None:
                 video_writer.write(annotated)
-            if args.show and annotated is not None:
-                cv2.imshow("EduVision", annotated)
-                if cv2.waitKey(1) & 0xFF in {27, ord("q")}:
-                    break
+            if show_enabled and annotated is not None:
+                try:
+                    cv2.imshow("EduVision", annotated)
+                    if cv2.waitKey(1) & 0xFF in {27, ord("q")}:
+                        break
+                except cv2.error as exc:
+                    show_enabled = False
+                    print(
+                        "OpenCV GUI is unavailable; disabling --show and continuing "
+                        f"the pipeline. Details: {exc}",
+                        file=sys.stderr,
+                    )
 
             if args.max_frames and frame_index >= args.max_frames:
                 break
@@ -405,8 +441,11 @@ def run(args: argparse.Namespace) -> int:
         capture.release()
         if video_writer is not None:
             video_writer.release()
-        if args.show:
-            cv2.destroyAllWindows()
+        if show_enabled:
+            try:
+                cv2.destroyAllWindows()
+            except cv2.error:
+                pass
         if output_handle is not None:
             output_handle.close()
 

@@ -5,7 +5,7 @@ Behavior boxes are associated with canonical person tracks using maximum-weight
 Hungarian matching over IoU, containment, and center distance.
 
 Visual labels are `focused`, `drowsy`, `sleeping`, `using_phone`, `off_task`,
-and `side_talking`. `away_from_seat` is handled by the fixed-camera
+`side_talking`, and `raising_hand`. `away_from_seat` is handled by the fixed-camera
 `SeatMonitor`, not by YOLO.
 
 Train with `python tools/train_behavior.py` after preparing the YOLO detection

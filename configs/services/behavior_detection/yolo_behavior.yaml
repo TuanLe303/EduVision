@@ -1,4 +1,4 @@
-model: models/behavior_yolo.pt
+model: weights/behavior_yolo26n.pt
 device: auto
 input_size: 640
 confidence_threshold: 0.30
@@ -24,6 +24,7 @@ priority:
   - drowsy
   - side_talking
   - off_task
+  - raising_hand
   - focused
 
 state_thresholds:
@@ -33,3 +34,4 @@ state_thresholds:
   using_phone: 0.55
   off_task: 0.55
   side_talking: 0.55
+  raising_hand: 0.55

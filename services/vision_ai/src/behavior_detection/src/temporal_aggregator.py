@@ -12,6 +12,7 @@ CANONICAL_STATES = (
     "using_phone",
     "off_task",
     "side_talking",
+    "raising_hand",
     "away_from_seat",
 )
 
@@ -27,6 +28,7 @@ DEFAULT_PRIORITY = (
     "drowsy",
     "side_talking",
     "off_task",
+    "raising_hand",
     "focused",
 )
 

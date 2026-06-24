@@ -1,4 +1,4 @@
-path: datasets/behavior
+path: data/behavior1
 train: train/images
 val:   val/images
 test:  test/images
