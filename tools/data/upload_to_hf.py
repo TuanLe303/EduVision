@@ -4,11 +4,11 @@ EduVision -- HuggingFace Dataset Upload Script
 Uploads the processed dataset (frames + annotations + splits) to HuggingFace.
 
 What gets uploaded:
-    data/raw_frames/      -> EduVision/raw_frames/
-    data/annotated/       -> EduVision/annotated/
-    data/dataset/         -> EduVision/dataset/
+    All subdirectories in the data/ folder are dynamically found and uploaded.
+    e.g. data/raw_frames/ -> EduVision/raw_frames/
 
 What does NOT get uploaded:
+    Root-level files in data/
     Data Collection/      -> Raw videos (too large, already extracted)
     *.pt model weights    -> Not data
 
@@ -30,13 +30,17 @@ except ImportError:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-UPLOAD_FOLDERS = [
-    ("data/raw_frames",  "raw_frames"),   # local_path -> hf_path
-    ("data/annotated",   "annotated"),
-    ("data/dataset",     "dataset"),
-]
+def get_upload_folders() -> list[tuple[str, str]]:
+    """Dynamically get all subdirectories in the data/ folder to upload."""
+    data_dir = PROJECT_ROOT / "data"
+    folders = []
+    if data_dir.exists():
+        for item in sorted(data_dir.iterdir()):
+            if item.is_dir():
+                folders.append((f"data/{item.name}", item.name))
+    return folders
 
 # Files/patterns to skip
 SKIP_SUFFIXES = {".mov", ".mp4", ".avi", ".MOV", ".MP4", ".pt", ".pth", ".onnx"}
@@ -120,9 +124,9 @@ def parse_args() -> argparse.Namespace:
         help="Preview files without uploading (Not fully supported with upload_folder, but will list folders)"
     )
     parser.add_argument(
-        "--folder", choices=["raw_frames", "annotated", "dataset", "all"],
+        "--folder",
         default="all",
-        help="Which folder to upload (default: all)"
+        help="Which folder in data/ to upload (default: all)"
     )
     return parser.parse_args()
 
@@ -138,9 +142,12 @@ def main() -> None:
     print()
 
     # Filter folders to upload
-    folders = UPLOAD_FOLDERS
+    folders = get_upload_folders()
     if args.folder != "all":
-        folders = [(l, h) for l, h in UPLOAD_FOLDERS if h == args.folder]
+        folders = [(l, h) for l, h in folders if h == args.folder]
+        if not folders:
+            print(f"  [ERROR] Folder '{args.folder}' not found in data/ directory.")
+            sys.exit(1)
 
     if args.dry_run:
         print("  DRY RUN: The following folders would be uploaded:")
