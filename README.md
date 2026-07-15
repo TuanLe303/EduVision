@@ -1,469 +1,395 @@
-# EduVision — AI Classroom Monitoring System
+# EduVision
 
-> An intelligent classroom monitoring system that uses computer vision and AI to automate attendance, track student engagement, analyze behaviors, and generate post-session reports.
+EduVision is a fixed-camera classroom monitoring prototype. It combines person
+detection, multi-object tracking, behavior recognition, optional face
+recognition, seat monitoring, a FastAPI backend, a React dashboard, and an LLM
+report generator for post-session summaries.
 
----
+The repository is currently organized as a local, multi-service development
+project rather than a packaged production deployment. The fastest way to try the
+end-to-end computer vision path is the Streamlit harness in
+`services/streamlit_demo.py`.
 
-## 1. Project Name
+## Current Capabilities
 
-**EduVision**
+- Detect and track students from a video file, webcam, HTTP stream, or RTSP
+  stream.
+- Classify classroom behavior with a custom YOLO behavior model.
+- Stabilize behavior states with temporal aggregation before exposing final
+  labels.
+- Detect off-task objects such as cell phones and associate them with student
+  tracks.
+- Optionally detect and recognize faces with InsightFace enrollments.
+- Optionally monitor assigned seats and prioritize `away_from_seat` when the
+  seat monitor confirms it.
+- Export per-frame JSONL and annotated video from the Vision AI CLI.
+- Aggregate JSONL into class and student summaries for report generation.
+- Generate Markdown session reports with Gemini or OpenAI GPT.
+- Persist students, sessions, attendance, behavior events, and generated reports
+  through a FastAPI backend backed by local SQLite.
+- Run a React/Vite dashboard against the backend, with mock fallbacks when the
+  backend is unavailable.
+- Evaluate end-to-end predictions against sparse or sampled ground truth.
 
----
-
-## 2. Short Description
-
-EduVision is an AI-powered classroom monitoring pipeline built for higher education environments. A camera mounted at an elevated position in the classroom feeds live video into the system, which automatically identifies students, tracks their positions, analyzes behavioral states (focused, drowsy, using phone, away from seat), monitors basic instructor activity, and produces a structured session report using a large language model (LLM). The goal is not to replace human judgment but to provide objective, data-driven observational support for instructors and administrators.
-
----
-
-## 3. Key Features
-
-| Feature | Description |
-|---|---|
-| **Automatic Attendance** | Identifies students via face recognition and logs entry/exit times |
-| **Student Tracking** | Multi-object tracking assigns a persistent ID to each student throughout the session |
-| **Behavior Analysis** | Classifies per-student states: focused, drowsy, using phone, absent from seat, side-talking |
-| **Instructor Monitoring** | Tracks basic instructor movement and presence at the front of the class |
-| **Session Statistics** | Aggregates per-student and class-wide engagement metrics over time |
-| **LLM Report Generation** | Generates a human-readable session summary using Gemini or GPT (selectable at runtime) |
-| **Dashboard / Notification** | Exposes metrics via a web dashboard and supports alert notifications |
-
----
-
-## 4. System Architecture
+## Architecture
 
 ```mermaid
-flowchart TD
-    CAM["IP Camera / Video File"]
-    VC["Video Connection"]
-    CAM --> VC
+flowchart LR
+    INPUT["Camera / Video"] --> CAPTURE["Video capture"]
+    CAPTURE --> VISION["Vision AI pipeline"]
+    VISION --> API["FastAPI backend"]
+    API --> DASHBOARD["React dashboard"]
 
-    subgraph VA["Vision AI Service"]
-        direction TB
-        PD["1. Person Detection\nyolo11n · yolo11s"]
-        MOT["2. Multi-object Tracking\nByteTrack · BoT-SORT"]
-        FD["3. Face Detection\nSCRFD · RetinaFace"]
-        FR["4. Face Recognition / Attendance\nbuffalo_s · buffalo_l · ArcFace"]
-        OD["5. Object Detection — off-task\nphone · laptop · book · bottle"]
-        BD["6. Behavior Detection\nCustom YOLO\nfocused · drowsy · sleeping\nusing_phone · off_task · side_talking · raising_hand"]
-        TA["7. Temporal Aggregation\nPer-track window · hysteresis"]
-        SM["8. Seat Monitor\nFixed camera · identity · seat ROI\naway_from_seat"]
-        BA["9. Final Behavior\nTemporal behavior + seat priority"]
-
-        PD --> MOT
-        MOT --> FD
-        FD --> FR
-        MOT --> OD
-        MOT --> BD
-        MOT --> SM
-        FR --> SM
-        OD --> BD
-        BD --> TA
-        TA --> BA
-        SM --> BA
-    end
-
-    VC --> VA
-
-    BA --> API
-
-    subgraph BACK["Backend"]
-        API["Backend API\nFastAPI + PostgreSQL"]
-        RG["Report Generator\nGemini · GPT"]
-        API --> RG
-    end
-
-    API --> FE["Web Dashboard\nREST API · WebSocket · Notifications"]
-    RG  --> FE
+    VISION --> JSONL["JSONL + annotated video"]
+    JSONL --> REPORT["LLM report generator"]
+    API --> DB["SQLite database"]
 ```
 
-The system is organized as **independent microservices** that communicate via REST API or message queues:
+Inside the Vision AI pipeline, the main steps are person detection, tracking,
+behavior detection, optional face recognition, optional seat monitoring, and
+temporal aggregation.
 
-- **video_connection** — camera/stream ingestion and frame distribution
-- **vision_ai** — core CV pipeline: detection → tracking → face recognition → object detection → behavior detection → temporal aggregation → seat monitoring
-- **backend_api** — persists events to the database and exposes a REST API
-- **report_generator** — queries the database and calls an LLM to produce session reports
-- **frontend** — web dashboard for live monitoring and historical reports
+## Services
 
----
+| Path | Purpose |
+| --- | --- |
+| `services/vision_ai` | Core per-frame CV pipeline and annotation helpers. |
+| `services/backend_api` | FastAPI app, SQLite persistence, student enrollment, session lifecycle, reports. |
+| `services/frontend` | React/Vite dashboard for sessions, students, reports, and settings. |
+| `services/report_generator` | JSONL aggregation, prompt building, Gemini/GPT report generation. |
+| `services/video_connection` | Real-time capture helpers for RTSP/webcam sources. |
+| `services/streamlit_demo.py` | Local E2E harness up to pre-report session summary. |
+| `tools/evaluate` | E2E accuracy conversion, evaluation, and performance benchmark tools. |
+| `configs/services` | Module configs for detectors, tracking, behavior, seats, face recognition, reports. |
+| `tests` | Unit and integration tests for temporal behavior, seat monitoring, reports, detectors, and E2E metrics. |
 
-## 5. Technologies Used
+## Requirements
 
-Each CV module supports multiple interchangeable backends. The active backend is selected via config or CLI flag, so the system can be tuned to match available hardware — from a CPU-only laptop to a GPU workstation.
+- Python 3.10.9 or newer.
+- `uv` for the locked Python environment.
+- Node.js 18 or newer for the frontend.
+- Optional NVIDIA GPU with CUDA for faster inference.
+- Optional Microsoft Visual C++ Build Tools on Windows if installing the face
+  recognition extras manually. This repo's `pyproject.toml` pins a Windows
+  InsightFace wheel through `uv`.
 
-### 5.1 Person Detection
+## Python Setup
 
-| Option | Model | Notes |
-|---|---|---|
-| **`yolo11n`** *(default)* | YOLOv11-nano | Fastest, lowest VRAM — suitable for CPU or low-end GPU |
-| **`yolo11s`** | YOLOv11-small | Better accuracy, moderate GPU recommended |
-
-Selected via `--detector yolo11n` or `--detector yolo11s`.
-
-### 5.2 Multi-object Tracking
-
-| Option | Algorithm | Notes |
-|---|---|---|
-| **`bytetrack`** *(default)* | [ByteTrack](https://github.com/ifzhang/ByteTrack) | Fast, robust; start here |
-| **`botsort`** | [BoT-SORT](https://github.com/NirAharon/BoT-SORT) | Better ID consistency when ByteTrack produces ID switches |
-
-Selected via `--tracker bytetrack` or `--tracker botsort`. Switch to BoT-SORT only if frequent ID loss is observed.
-
-### 5.3 Face Detection
-
-| Option | Model | Notes |
-|---|---|---|
-| **`scrfd`** *(default)* | SCRFD (InsightFace) | Fast, lightweight, good for small faces from overhead camera |
-| **`retinaface`** | RetinaFace (InsightFace) | More accurate, higher compute cost |
-
-Selected via `--face-detector scrfd` or `--face-detector retinaface`.
-
-### 5.4 Face Recognition / Attendance
-
-| Option | Model | Notes |
-|---|---|---|
-| **`buffalo_s`** *(default)* | InsightFace `buffalo_s` | Lightweight, suitable for real-time on modest GPU |
-| **`buffalo_l`** | InsightFace `buffalo_l` | Higher accuracy, requires more VRAM |
-
-The recognition backend is selected with `--recognizer insightface`; choose the
-model pack with `--recognition-model buffalo_s` or `--recognition-model buffalo_l`.
-
-### 5.5 Object Detection (Off-task Behavior)
-
-Runs a COCO object detector for off-task objects and associates each object with
-the canonical student track. A detected phone can override the frame-level
-behavior prediction for that track before temporal aggregation.
-
-**Tracked object classes:**
-
-| Category | Objects |
-|---|---|
-| Electronic devices | phone, laptop, tablet, earphone |
-| Study materials | book, pen, paper |
-| Other | backpack, food, bottle |
-
-### 5.6 Behavior Detection and Temporal Aggregation
-
-A custom YOLO detection model predicts one visual behavior box per visible
-student. Behavior boxes are matched to canonical person tracks, then aggregated
-independently per `track_id` using a temporal window, confidence thresholds,
-priority rules, and hysteresis.
-
-| Input signal | Source module |
-|---|---|
-| Visual behavior box | Custom behavior YOLO |
-| Phone/object evidence | Object Detection |
-| Track ID and person bbox | Multi-object Tracking |
-| Prediction history | Temporal Aggregator |
-
-**Output behavior states:**
-
-| State | Trigger signals |
-|---|---|
-| `focused` | Sustained focused prediction |
-| `drowsy` | Sustained drowsy prediction |
-| `sleeping` | Sustained sleeping prediction |
-| `using_phone` | Sustained model prediction or associated phone detection |
-| `off_task` | Sustained off-task prediction |
-| `side_talking` | Sustained side-talking prediction |
-| `raising_hand` | Sustained hand-raising / classroom participation prediction |
-| `away_from_seat` | Fixed-camera seat monitor confirms the student elsewhere while the assigned seat remains empty |
-
-Behavior thresholds are configured in
-`configs/services/behavior_detection/yolo_behavior.yaml`.
-
-### 5.7 Seat Monitoring / Attendance
-
-At class start, recognized tracks calibrate a fixed seat ROI for each student.
-Leaving the seat requires sustained spatial displacement, an empty assigned seat,
-and face recognition confirming the same student at the new location. Missing or
-occluded detections alone are not treated as `away_from_seat`.
-
----
-
-### 5.8 Backend & Data
-
-| Component | Technology |
-|---|---|
-| Backend Framework | [FastAPI](https://fastapi.tiangolo.com/) |
-| Database | PostgreSQL (production) / SQLite (development) |
-| Deep Learning Framework | PyTorch |
-| Image Processing | OpenCV, Pillow |
-
-### 5.9 LLM Report Generation
-
-| Provider | Notes |
-|---|---|
-| **Google Gemini** | Selected via `--llm gemini` at runtime |
-| **OpenAI GPT** | Selected via `--llm gpt` at runtime |
-
-### 5.10 Frontend
-
-| Component | Technology |
-|---|---|
-| Web Dashboard | React (planned) |
-| Real-time updates | WebSocket |
-
-### 5.11 Infrastructure
-
-| Component | Technology |
-|---|---|
-| Environment | Python 3.10+, virtualenv |
-| Containerization | Docker + Docker Compose (planned) |
-
----
-
-## 6. Installation
-
-### Prerequisites
-
-- Python 3.10 or higher
-- Git
-- (Optional) NVIDIA GPU with CUDA for accelerated inference
-
-### Steps
+Preferred setup:
 
 ```powershell
-# Install uv once, then create .venv and install the locked base environment.
 uv sync
-
-# Run tests.
-uv run pytest
-
-# Run the behavior pipeline without the optional face stack.
-uv run python -m services.vision_ai.src.main --source classroom.mp4 `
-  --behavior-model models/behavior_yolo.pt
 ```
 
-Face recognition and identity-based seat monitoring are optional because the
-PyPI InsightFace package must compile native code on Windows. Install Microsoft
-Visual C++ Build Tools 14+ first, then use:
+`uv sync` installs the locked core CV and test environment from
+`pyproject.toml`. Some service entry points also depend on the legacy
+requirements files. Install these when you use the report generator or backend:
+
+```powershell
+# Report generator dependencies: loguru, google-generativeai, openai.
+uv pip install -r requirements.txt
+
+# Backend API dependencies: fastapi, uvicorn, python-multipart, requests.
+uv pip install -r services\backend_api\requirements-api.txt
+```
+
+Install optional face-recognition dependencies:
 
 ```powershell
 uv sync --extra face
-uv run python -m services.vision_ai.src.main --source classroom.mp4 `
-  --behavior-model models/behavior_yolo.pt `
-  --enrollment-path data/enrollments.json --start-class
 ```
 
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd EduVision
-
-# 2. Create and activate virtual environment
-python -m venv ev
-
-# Windows
-ev\Scripts\activate
-
-# macOS / Linux
-source ev/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Copy and configure environment variables
-cp configs/.env.example configs/.env
-# Edit configs/.env — set your database URL, LLM API keys, camera source, etc.
-```
-
-### Environment Variables
-
-| Variable | Description | Example |
-|---|---|---|
-| `GEMINI_API_KEY` | Google Gemini API key | `AIza...` |
-| `OPENAI_API_KEY` | OpenAI API key | `sk-...` |
-| `DATABASE_URL` | Database connection string | `postgresql://user:pass@localhost/eduvision` |
-| `CAMERA_SOURCE` | Video source (file path or RTSP URL) | `0` or `rtsp://...` |
-| `LLM_PROVIDER` | Default LLM provider | `gemini` or `gpt` |
-
----
-
-## 7. Running the Demo
-
-> **Note:** Full demo is currently under development. The steps below describe the intended workflow.
-
-### Local E2E harness (stops before report generation)
-
-The Streamlit harness accepts an uploaded video or a camera index, runs the
-Vision AI pipeline, displays annotated frames, and exports both frame-level
-JSONL and the aggregated session JSON consumed by the report generator. It does
-not start a backend, database, report LLM, or production frontend.
+Pip fallback:
 
 ```powershell
-uv sync
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+## Frontend Setup
+
+```powershell
+cd services\frontend
+npm install
+```
+
+## Model Weights
+
+The checked-in demo weights are:
+
+- `weights/behavior_yolo26n.pt` - default custom classroom behavior model.
+- `weights/yolo26n.pt` - local YOLO26 person detector weight.
+
+The Vision AI CLI defaults to `weights/behavior_yolo26n.pt` for behavior
+classification. Ultralytics may download official model assets on first use if
+a selected detector is not already available locally.
+
+## Quick Start: Streamlit E2E Harness
+
+This is the easiest local demo. It accepts an uploaded video or local camera,
+runs the Vision AI pipeline, previews annotated frames, writes frame JSONL, and
+creates a pre-report summary.
+
+```powershell
 uv run streamlit run services/streamlit_demo.py
 ```
 
-The custom behavior model defaults to `weights/behavior_yolo26n.pt`. The
-selected person detector (for example official `yolo26n.pt`) is a separate COCO
-model used for person tracking and may be downloaded by Ultralytics on first
-run. For a quick CPU smoke test, keep object detection disabled, choose CPU,
-and limit the run to 30-100 frames.
+Outputs are written under:
 
-```bash
-# Activate virtual environment first
-ev\Scripts\activate   # Windows
-source ev/bin/activate  # macOS / Linux
-
-# Start the backend API
-python -m services.backend_api.main
-
-# Start the vision AI pipeline with a video file
-python -m services.vision_ai.src.main --source path/to/video.mp4
-
-# Start the vision AI pipeline with a webcam (device index 0)
-python -m services.vision_ai.src.main --source 0
-
-# Generate a session report using Gemini
-python -m services.report_generator.main --session-id <SESSION_ID> --llm gemini
-
-# Generate a session report using GPT
-python -m services.report_generator.main --session-id <SESSION_ID> --llm gpt
-
-# Start the web dashboard
-python -m services.frontend.main
-# Open http://localhost:3000 in your browser
+```text
+outputs/streamlit/
 ```
 
----
+For a quick CPU smoke test, use:
 
-## 8. Directory Structure
+- Detector: `yolo26n` or `yolo11n`
+- Tracker: `bytetrack_classroom`
+- Device: `cpu`
+- Skip object detector: enabled
+- Max frames: 30 to 100
 
+## Run Vision AI From CLI
+
+Process a video and write frame-level JSONL:
+
+```powershell
+uv run python -m services.vision_ai.src.main `
+  --source path\to\classroom.mp4 `
+  --detector yolo26n `
+  --tracker bytetrack_classroom `
+  --behavior-model weights\behavior_yolo26n.pt `
+  --output-jsonl outputs\session.jsonl `
+  --max-frames 300 `
+  --skip-objects
 ```
+
+Process a webcam:
+
+```powershell
+uv run python -m services.vision_ai.src.main `
+  --source 0 `
+  --behavior-model weights\behavior_yolo26n.pt `
+  --show
+```
+
+Enable face recognition and seat calibration:
+
+```powershell
+uv run python -m services.vision_ai.src.main `
+  --source path\to\classroom.mp4 `
+  --behavior-model weights\behavior_yolo26n.pt `
+  --enrollment-path data\enrollments.json `
+  --start-class
+```
+
+Useful Vision AI flags:
+
+| Flag | Notes |
+| --- | --- |
+| `--source` | Video path, RTSP/HTTP URL, or webcam index. |
+| `--detector` | `yolo11n`, `yolo11s`, `yolo26n`, or `yolo26s`. |
+| `--tracker` | `bytetrack`, `bytetrack_classroom`, or `botsort`. |
+| `--person-input-size` | Use `1280` for distant classroom students in Full HD video. |
+| `--person-confidence` | Detection threshold passed to tracking. Default is low for classroom footage. |
+| `--behavior-window` | Override temporal aggregation window size. |
+| `--skip-objects` | Skip off-task object detector for faster smoke tests. |
+| `--output-jsonl` | Write one JSON object per processed frame. |
+| `--output-video` | Write annotated MP4. |
+| `--show` | Display annotated frames with OpenCV. |
+
+## Generate A Report From JSONL
+
+Install report dependencies once if they are not already available:
+
+```powershell
+uv pip install -r requirements.txt
+```
+
+Set the API key for the provider you want to use:
+
+```powershell
+$env:GEMINI_API_KEY = "your-key"
+$env:OPENAI_API_KEY = "your-key"
+```
+
+Generate a Vietnamese report with Gemini:
+
+```powershell
+uv run python -m services.report_generator.main `
+  --source outputs\session.jsonl `
+  --llm gemini `
+  --language vi `
+  --output outputs\report.md
+```
+
+Generate only the prompt, without calling an LLM:
+
+```powershell
+uv run python -m services.report_generator.main `
+  --source outputs\session.jsonl `
+  --print-prompt
+```
+
+Defaults live in:
+
+```text
+configs/services/report_generator/config.yaml
+```
+
+## Run Backend API
+
+Install backend dependencies once if they are not already available:
+
+```powershell
+uv pip install -r services\backend_api\requirements-api.txt
+```
+
+Start the FastAPI backend:
+
+```powershell
+uv run uvicorn services.backend_api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Open the API docs:
+
+```text
+http://localhost:8000/docs
+```
+
+The backend stores local data in:
+
+```text
+data/eduvision.db
+data/enrollments.json
+data/avatars/
+data/reports/
+```
+
+Important endpoints:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health` | Health check. |
+| `GET` | `/api/students` | List enrolled students. |
+| `POST` | `/api/students` | Create/update a student with optional face image upload. |
+| `DELETE` | `/api/students/{student_id}` | Delete a student. |
+| `GET` | `/api/sessions` | List sessions. |
+| `POST` | `/api/sessions/start` | Start a class session. |
+| `POST` | `/api/sessions/{session_id}/end` | End a class session. |
+| `GET` | `/api/sessions/{session_id}/attendance` | Session attendance summary. |
+| `GET` | `/api/sessions/{session_id}/events` | Behavior events. |
+| `POST` | `/api/sessions/{session_id}/events` | Push batched Vision AI events. |
+| `GET` | `/api/sessions/{session_id}/summary` | Aggregated session behavior summary. |
+| `POST` | `/api/reports/generate` | Generate and save a backend report. |
+| `GET` | `/api/reports/{session_id}` | Load a saved backend report. |
+
+## Push Vision Events To Backend
+
+1. Start the backend.
+2. Create a session from the API or frontend.
+3. Run the event pusher against that active session:
+
+```powershell
+uv run python -m services.backend_api.event_pusher `
+  --session-id 1 `
+  --source path\to\classroom.mp4 `
+  --api-url http://localhost:8000 `
+  --detector yolo26n `
+  --behavior-model weights\behavior_yolo26n.pt `
+  --max-frames 300
+```
+
+The pusher wraps `VisionPipeline`, buffers `final_behavior` events, and sends
+them to `/api/sessions/{session_id}/events`.
+
+## Run Frontend Dashboard
+
+Start the backend first if you want real data. Then:
+
+```powershell
+cd services\frontend
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Vite proxies `/api` to `http://localhost:8000`. If the backend is unreachable,
+the frontend falls back to mock data for read-only views.
+
+## Evaluation
+
+Evaluate pipeline JSONL against a ground-truth JSONL:
+
+```powershell
+uv run python -m tools.evaluate.evaluate `
+  --predictions outputs\session.jsonl `
+  --ground-truth data\ground_truth\session.jsonl `
+  --fps 25 `
+  --bbox-iou 0.5 `
+  --output outputs\evaluation.json
+```
+
+Run a performance benchmark:
+
+```powershell
+uv run python -m tools.evaluate.benchmark `
+  --source path\to\classroom.mp4 `
+  --behavior-model weights\behavior_yolo26n.pt `
+  --output-jsonl outputs\session.jsonl `
+  --metrics-output outputs\performance.json `
+  --warmup-frames 5
+```
+
+See `tools/evaluate/README.md` for the accepted ground-truth formats and metric
+details.
+
+## Tests
+
+Run the Python test suite:
+
+```powershell
+uv run pytest
+```
+
+The tests cover temporal behavior aggregation, seat monitoring, report
+aggregation, person detection behavior, and E2E metrics.
+
+## Repository Layout
+
+```text
 EduVision/
-│
-├── configs/                    # Configuration files and environment templates
-│   ├── datasets/               # Dataset-specific configs
-│   └── models/                 # Model hyperparameter configs
-│
-├── data/                       # Raw and processed data (gitignored)
-│
-├── database/                   # Database schema and migration scripts
-│
-├── docs/                       # Extended documentation
-│   └── overview.md
-│
-├── models/                     # Pretrained model weights (gitignored)
-│
-├── monitoring/                 # System health monitoring configs
-│
-├── services/                   # Microservices
-│   ├── video_connection/       # Camera / stream ingestion service
-│   ├── vision_ai/              # Core computer vision pipeline
-│   │   └── src/
-│   │       ├── person_detection/   # YOLO-based person & face detection
-│   │       ├── face_recognition/   # Student identification
-│   │       ├── tracking/           # Multi-object tracking
-│   │       ├── behavior/           # Engagement & behavior analysis
-│   │       ├── e2e/                # End-to-end integration tests
-│   │       └── main.py             # Pipeline entry point
-│   ├── backend_api/            # FastAPI REST backend + database layer
-│   ├── report_generator/       # LLM-based report generation (Gemini / GPT)
-│   └── frontend/               # Web dashboard
-│
-├── tools/                      # Utility scripts (data preparation, evaluation)
-│
-├── ev/                         # Python virtual environment (gitignored)
-├── requirements.txt            # Python dependencies
-├── .gitignore
-└── README.md
+  configs/                 Service configuration files.
+  data/                    Local runtime data, ignored by git.
+  outputs/                 Generated JSONL, summaries, videos, metrics.
+  scripts/                 Utility scripts such as auto enrollment.
+  services/
+    backend_api/           FastAPI + SQLite backend.
+    frontend/              React/Vite dashboard.
+    report_generator/      JSONL aggregation and LLM report generation.
+    streamlit_demo.py      Local E2E harness.
+    video_connection/      Real-time capture helpers.
+    vision_ai/             Detection, tracking, behavior, face, and seat logic.
+  tests/                   Pytest suite.
+  tools/
+    evaluate/              E2E evaluation and benchmark tools.
+  weights/                 Local model weights.
+  pyproject.toml           uv project metadata and dependencies.
+  requirements.txt         pip fallback dependencies.
 ```
 
----
+## Notes And Limitations
 
-## 9. Main APIs
-
-> The API is under development. The endpoints below reflect the planned specification.
-
-### Attendance
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/sessions` | List all recorded sessions |
-| `GET` | `/api/sessions/{session_id}` | Get details for a specific session |
-| `GET` | `/api/sessions/{session_id}/attendance` | Get attendance records for a session |
-
-### Students
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/students` | List all registered students |
-| `POST` | `/api/students` | Register a new student (with face images) |
-| `GET` | `/api/students/{student_id}/sessions` | Get session history for a student |
-
-### Behavior Events
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/sessions/{session_id}/events` | Get all behavior events for a session |
-| `GET` | `/api/sessions/{session_id}/summary` | Get aggregated behavior statistics |
-
-### Reports
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/reports/generate` | Trigger LLM report generation for a session |
-| `GET` | `/api/reports/{session_id}` | Retrieve the generated report |
-
-### Live Stream
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `WebSocket` | `/ws/stream` | Real-time annotated video stream |
-| `WebSocket` | `/ws/events` | Real-time behavior event feed |
-
-Full API documentation (Swagger UI) will be available at `http://localhost:8000/docs` when the backend is running.
-
----
-
-## 10. Contributing
-
-Contributions are welcome. Please follow these guidelines:
-
-1. **Fork** the repository and create a feature branch from `main`:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Commit** your changes with clear, descriptive messages:
-   ```bash
-   git commit -m "feat: add drowsiness detection module"
-   ```
-
-3. **Test** your changes locally before submitting a pull request.
-
-4. **Open a Pull Request** against the `main` branch. Include:
-   - What the change does
-   - Why it is needed
-   - How it was tested
-
-### Commit Message Convention
-
-| Prefix | Use for |
-|---|---|
-| `feat:` | New feature |
-| `fix:` | Bug fix |
-| `docs:` | Documentation only |
-| `refactor:` | Code restructuring, no behavior change |
-| `test:` | Adding or updating tests |
-| `chore:` | Build scripts, configs, tooling |
-
-### Code Style
-
-- Python code follows [PEP 8](https://peps.python.org/pep-0008/)
-- Use type hints for all function signatures
-- Keep modules focused — one responsibility per file
-
----
-
-## 11. Developers
-
-| Name | Student ID | Role |
-|---|---|---|
-| *(to be filled)* | *(to be filled)* | *(to be filled)* |
-
----
-
-*EduVision — Intelligent Classroom Monitoring, powered by Computer Vision and AI.*
+- The production database described in earlier drafts is not wired in here;
+  the active backend uses SQLite.
+- The Streamlit harness stops at pre-report summary generation. Use
+  `services.report_generator.main` to call an LLM from a JSONL file.
+- Face recognition is optional and heavier than the default behavior-only path.
+- Real-time RTSP sources may need lower input size, frame skipping, or the
+  threaded capture helpers in `services/video_connection`.
+- Generated runtime data and most model weights are intentionally ignored by
+  git.
