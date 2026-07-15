@@ -1,9 +1,12 @@
 import { useState, useCallback, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import VideoStream from '../components/VideoStream'
 import BehaviorBadge from '../components/BehaviorBadge'
 import StatCard from '../components/StatCard'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { BEHAVIOR_META, GAZE_ARROW, OBJECT_EMOJI, WS_EVENTS } from '../constants'
+import { api } from '../api'
 
 const MAX_EVENTS = 50
 
@@ -29,6 +32,15 @@ export default function Dashboard() {
 
   const { status: evStatus } = useWebSocket(WS_EVENTS, { onMessage: onEvent })
 
+  // fetch active session if not available via WS
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: () => api.getSessions(),
+    refetchInterval: 5000,
+  })
+  
+  const activeSession = session || sessions.find(s => !s.end_time)
+
   // derived stats
   const focused    = tracks.filter(t => t.state === 'focused').length
   const total      = tracks.length
@@ -38,11 +50,11 @@ export default function Dashboard() {
   }, {})
 
   return (
-    <div className="flex flex-col gap-4 h-full overflow-auto">
+    <div className="flex flex-col gap-4 h-full overflow-hidden">
       {/* stat bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 flex-shrink-0">
         <StatCard label="Đang theo dõi"   value={total}     icon="👥" />
-        <StatCard label="Chú ý"           value={`${attPct}%`} icon="🎯" color="text-green-400" />
+        <StatCard label="Chú ý"           value={`${attPct}%`} icon="🎯" color="text-indigo-400" />
         <StatCard label="Mất tập trung"   value={total - focused} icon="⚠️" color="text-amber-400" />
         <StatCard label="Trạng thái WS"   value={evStatus}  icon="🔗"
           color={evStatus === 'connected' ? 'text-green-400' : 'text-slate-400'} />
@@ -52,7 +64,7 @@ export default function Dashboard() {
       <div className="flex gap-4 flex-1 min-h-0">
         {/* video */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
-          <VideoStream tracks={tracks} frameW={frameW} frameH={frameH} wsStatus={evStatus} />
+          <VideoStream tracks={tracks} frameW={frameW} frameH={frameH} wsStatus={evStatus} session={activeSession} />
 
           {/* attention bar */}
           <div className="card">
@@ -115,26 +127,25 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* behavior distribution */}
+          {/* behavior distribution chart */}
           {total > 0 && (
-            <div className="card">
-              <h3 className="sec-title">Phân bố hành vi</h3>
-              <div className="space-y-1.5">
-                {Object.entries(stateCounts).map(([state, count]) => {
-                  const meta = BEHAVIOR_META[state] ?? { label: state, color: '#94a3b8' }
-                  return (
-                    <div key={state} className="flex items-center gap-2 text-sm">
-                      <span className="w-20 text-slate-400 text-xs">{meta.label}</span>
-                      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{
-                          backgroundColor: meta.color,
-                          width: `${(count / total) * 100}%`
-                        }} />
-                      </div>
-                      <span className="text-xs text-slate-300 w-6 text-right">{count}</span>
-                    </div>
-                  )
-                })}
+            <div className="card h-48 flex-shrink-0 flex flex-col">
+              <h3 className="sec-title mb-0">Phân bố hành vi</h3>
+              <div className="flex-1 min-h-0 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(stateCounts).map(([k, v]) => ({ name: BEHAVIOR_META[k]?.label || k, value: v, fill: BEHAVIOR_META[k]?.color || '#94a3b8' }))}
+                      cx="50%" cy="50%" innerRadius={40} outerRadius={60}
+                      paddingAngle={5} dataKey="value" stroke="none"
+                    >
+                      {Object.entries(stateCounts).map(([k], index) => (
+                        <Cell key={`cell-${index}`} fill={BEHAVIOR_META[k]?.color || '#94a3b8'} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', fontSize: '12px', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}

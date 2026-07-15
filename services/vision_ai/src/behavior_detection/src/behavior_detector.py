@@ -78,7 +78,7 @@ class BehaviorDetector:
         model: Optional[Any] = None,
     ) -> None:
         cfg = {**_load_config(), **(config or {})}
-        self._model_path = model_path or cfg.get("model", "weights/behavior_yolo26n.pt")
+        self._model_path = model_path or cfg.get("model", "best.pt")
         self._conf = float(cfg.get("confidence_threshold", 0.30))
         self._iou = float(cfg.get("iou_threshold", 0.50))
         self._input_size = int(cfg.get("input_size", 640))

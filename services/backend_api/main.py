@@ -13,6 +13,8 @@ from __future__ import annotations
 import json
 import shutil
 import traceback
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -43,7 +45,18 @@ from services.backend_api.models import (
     StartSessionRequest,
     StudentOut,
     SummaryOut,
+    StartPipelineRequest,
+    PipelineStatusOut,
 )
+
+# ---------------------------------------------------------------------------
+# Global Pipeline State
+# ---------------------------------------------------------------------------
+class PipelineManager:
+    process: Optional[subprocess.Popen] = None
+    current_source: Optional[str] = None
+
+pipeline_mgr = PipelineManager()
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -272,6 +285,74 @@ async def get_report(session_id: int, db: Database = Depends(db_dep)):
         raise HTTPException(status_code=404, detail="Report not found")
     return ReportOut(**report)
 
+
+# ---------------------------------------------------------------------------
+# Pipeline Management (/api/pipeline)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/pipeline/status", response_model=PipelineStatusOut)
+async def get_pipeline_status():
+    is_running = False
+    pid = None
+    if pipeline_mgr.process is not None:
+        if pipeline_mgr.process.poll() is None:
+            is_running = True
+            pid = pipeline_mgr.process.pid
+        else:
+            pipeline_mgr.process = None
+            pipeline_mgr.current_source = None
+            
+    return PipelineStatusOut(
+        is_running=is_running,
+        source=pipeline_mgr.current_source,
+        pid=pid
+    )
+
+@app.post("/api/pipeline/start/{session_id}", response_model=PipelineStatusOut)
+async def start_pipeline(session_id: int, body: StartPipelineRequest, db: Database = Depends(db_dep)):
+    _require_session(db, session_id)
+    
+    # Check if already running
+    if pipeline_mgr.process is not None and pipeline_mgr.process.poll() is None:
+        raise HTTPException(status_code=400, detail="Pipeline is already running")
+        
+    python_exe = sys.executable
+    cmd = [
+        python_exe, "-m", "services.video_connection.realtime_demo",
+        "--session-id", str(session_id),
+        "--source", body.source,
+        "--target-fps", str(body.target_fps),
+        "--show",  # Pop up OpenCV window for demo
+    ]
+    
+    try:
+        pipeline_mgr.process = subprocess.Popen(
+            cmd,
+            cwd=str(Path(__file__).resolve().parents[3]) # Root of EduVision
+        )
+        pipeline_mgr.current_source = body.source
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start pipeline: {str(e)}")
+        
+    return PipelineStatusOut(
+        is_running=True,
+        source=pipeline_mgr.current_source,
+        pid=pipeline_mgr.process.pid
+    )
+
+@app.post("/api/pipeline/stop", response_model=PipelineStatusOut)
+async def stop_pipeline():
+    if pipeline_mgr.process is not None:
+        if pipeline_mgr.process.poll() is None:
+            pipeline_mgr.process.terminate()
+            try:
+                pipeline_mgr.process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                pipeline_mgr.process.kill()
+        pipeline_mgr.process = None
+        pipeline_mgr.current_source = None
+        
+    return PipelineStatusOut(is_running=False)
 
 # ---------------------------------------------------------------------------
 # Internal helpers

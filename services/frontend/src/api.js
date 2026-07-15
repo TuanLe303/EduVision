@@ -57,6 +57,12 @@ export const api = {
   endSession: (id) =>
     http.post(`/sessions/${id}/end`).then(r => r.data),
 
+  // Pipeline Management
+  getPipelineStatus: () => http.get('/pipeline/status').then(r => r.data),
+  startPipeline: (sessionId, source, targetFps) => 
+    http.post(`/pipeline/start/${sessionId}`, { source, target_fps: targetFps }).then(r => r.data),
+  stopPipeline: () => http.post('/pipeline/stop').then(r => r.data),
+
   generateReport: withMock(
     (sessionId, provider, language) =>
       http.post('/reports/generate', { session_id: sessionId, provider, language }).then(r => r.data),

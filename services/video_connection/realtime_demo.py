@@ -71,6 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Output
     p.add_argument("--show", action="store_true", help="Show annotated video window.")
+    p.add_argument("--enable-face", action="store_true", help="Enable face recognition.")
     p.add_argument("--output-video", default=None, help="Save annotated video to file.")
     p.add_argument("--max-frames", type=int, default=0,
                    help="Stop after N processed frames (0 = unlimited).")
@@ -94,12 +95,13 @@ def run(args: argparse.Namespace) -> int:
         "--detector", args.detector,
         "--person-confidence", str(args.person_confidence),
         "--person-input-size", str(args.person_input_size),
-        "--enable-face",
     ]
+    if args.enable_face:
+        vp_list.append("--enable-face")
+        if enrollment_path:
+            vp_list += ["--enrollment-path", enrollment_path]
     if args.behavior_model:
         vp_list += ["--behavior-model", args.behavior_model]
-    if enrollment_path:
-        vp_list += ["--enrollment-path", enrollment_path]
     if args.device:
         vp_list += ["--device", args.device]
     if args.face_device:

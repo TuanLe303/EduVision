@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import BehaviorBadge from '../components/BehaviorBadge'
 import { BEHAVIOR_META } from '../constants'
@@ -10,10 +10,11 @@ const TABS = [
   { id: 'students',   label: 'Từng sinh viên' },
 ]
 
-function AttendanceTab({ sessionId }) {
+function AttendanceTab({ sessionId, isLive }) {
   const { data, isLoading } = useQuery({
     queryKey: ['attendance', sessionId],
     queryFn: () => api.getAttendance(sessionId),
+    refetchInterval: isLive ? 3000 : false,
   })
   if (isLoading) return <p className="text-slate-400 text-sm">Đang tải...</p>
   if (!data?.length) return <p className="text-slate-500 text-sm py-4">Không có dữ liệu</p>
@@ -51,14 +52,16 @@ function AttendanceTab({ sessionId }) {
   )
 }
 
-function BehaviorTab({ sessionId }) {
+function BehaviorTab({ sessionId, isLive }) {
   const { data: summary, isLoading } = useQuery({
     queryKey: ['summary', sessionId],
     queryFn: () => api.getSummary(sessionId),
+    refetchInterval: isLive ? 3000 : false,
   })
   const { data: events = [] } = useQuery({
     queryKey: ['events', sessionId],
     queryFn: () => api.getEvents(sessionId),
+    refetchInterval: isLive ? 3000 : false,
   })
 
   if (isLoading) return <p className="text-slate-400 text-sm">Đang tải...</p>
@@ -127,10 +130,11 @@ function BehaviorTab({ sessionId }) {
   )
 }
 
-function StudentsTab({ sessionId }) {
+function StudentsTab({ sessionId, isLive }) {
   const { data: events = [] } = useQuery({
     queryKey: ['events', sessionId],
     queryFn: () => api.getEvents(sessionId),
+    refetchInterval: isLive ? 3000 : false,
   })
 
   const byStudent = events.reduce((acc, ev) => {
@@ -175,29 +179,59 @@ function StudentsTab({ sessionId }) {
 
 export default function SessionDetail({ sessionId, onBack }) {
   const [tab, setTab] = useState('attendance')
+  const qc = useQueryClient()
+  
   const { data: session, isLoading } = useQuery({
     queryKey: ['session', sessionId],
     queryFn: () => api.getSession(sessionId),
     enabled: !!sessionId,
+    refetchInterval: (data) => data?.end_time ? false : 3000,
   })
+
+  const endSession = useMutation({
+    mutationFn: () => api.endSession(sessionId),
+    onSuccess: () => qc.invalidateQueries(['session', sessionId]),
+  })
+
+  const isLive = session && !session.end_time
 
   return (
     <div className="card flex flex-col gap-4">
       {/* back + header */}
-      <div className="flex items-center gap-3">
-        <button onClick={onBack} className="btn-secondary text-sm px-3 py-1.5">
-          ← Quay lại
-        </button>
-        <div>
-          <h2 className="sec-title mb-0">
-            {isLoading ? 'Đang tải...' : (session?.class_name ?? `Phiên #${sessionId}`)}
-          </h2>
-          {session?.start_time && (
-            <p className="text-xs text-slate-500 mt-0.5">
-              {new Date(session.start_time).toLocaleString('vi-VN')}
-            </p>
-          )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="btn-secondary text-sm px-3 py-1.5">
+            ← Quay lại
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="sec-title mb-0">
+                {isLoading ? 'Đang tải...' : (session?.class_name ?? `Phiên #${sessionId}`)}
+              </h2>
+              {isLive ? (
+                <span className="badge bg-green-900/40 text-green-400 animate-pulse">Live</span>
+              ) : (
+                <span className="badge bg-slate-800 text-slate-400">Đã kết thúc</span>
+              )}
+            </div>
+            {session?.start_time && (
+              <p className="text-xs text-slate-500 mt-0.5">
+                {new Date(session.start_time).toLocaleString('vi-VN')}
+                {session?.end_time && ` - ${new Date(session.end_time).toLocaleString('vi-VN')}`}
+              </p>
+            )}
+          </div>
         </div>
+
+        {isLive && (
+          <button 
+            onClick={() => endSession.mutate()} 
+            disabled={endSession.isPending}
+            className="btn-danger"
+          >
+            {endSession.isPending ? 'Đang xử lý...' : 'Kết thúc phiên'}
+          </button>
+        )}
       </div>
 
       {/* tabs */}
@@ -212,9 +246,9 @@ export default function SessionDetail({ sessionId, onBack }) {
 
       {/* content */}
       <div className="min-h-48">
-        {tab === 'attendance' && <AttendanceTab sessionId={sessionId} />}
-        {tab === 'behavior'   && <BehaviorTab   sessionId={sessionId} />}
-        {tab === 'students'   && <StudentsTab   sessionId={sessionId} />}
+        {tab === 'attendance' && <AttendanceTab sessionId={sessionId} isLive={isLive} />}
+        {tab === 'behavior'   && <BehaviorTab   sessionId={sessionId} isLive={isLive} />}
+        {tab === 'students'   && <StudentsTab   sessionId={sessionId} isLive={isLive} />}
       </div>
     </div>
   )

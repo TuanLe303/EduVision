@@ -24,8 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--detector", default="yolo11n", choices=["yolo11n", "yolo11s","yolo26n","yolo26s"])
     parser.add_argument(
         "--behavior-model",
-        default="weights/behavior_yolo26n.pt",
-        help="Path to custom YOLO weights trained on student behavior classes.",
+        default=None,
+        help="Path to custom YOLO weights. If not set, reads from config (best.pt).",
     )
     parser.add_argument(
         "--behavior-window",

@@ -1,9 +1,58 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
+
+function CreateSessionModal({ onClose, onCreated }) {
+  const qc = useQueryClient()
+  const [className, setClassName] = useState('')
+
+  const create = useMutation({
+    mutationFn: () => api.startSession(className),
+    onSuccess: (data) => {
+      qc.invalidateQueries(['sessions'])
+      onCreated(data.id)
+    },
+  })
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="card w-96 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="sec-title mb-0">Tạo phiên học mới</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+        </div>
+        
+        <div>
+          <label className="text-xs text-slate-400 block mb-1">Tên lớp học</label>
+          <input
+            className="input-field w-full"
+            placeholder="VD: DPL302m - Nhóm 1"
+            value={className}
+            onChange={e => setClassName(e.target.value)}
+            autoFocus
+          />
+        </div>
+
+        {create.error && <p className="text-xs text-red-400">{create.error.message}</p>}
+
+        <div className="flex gap-2 mt-2">
+          <button onClick={onClose} className="btn-secondary flex-1">Hủy</button>
+          <button
+            onClick={() => create.mutate()}
+            disabled={!className || create.isPending}
+            className="btn-primary flex-1"
+          >
+            {create.isPending ? 'Đang tạo...' : 'Tạo phiên'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Sessions({ onSelectSession }) {
   const [search, setSearch] = useState('')
+  const [showModal, setShowModal] = useState(false)
   const { data: sessions = [], isLoading, error } = useQuery({
     queryKey: ['sessions'],
     queryFn: () => api.getSessions(),
@@ -18,12 +67,17 @@ export default function Sessions({ onSelectSession }) {
     <div className="card flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="sec-title">Phiên học</h2>
-        <input
-          className="input-field w-64"
-          placeholder="Tìm kiếm..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div className="flex gap-2">
+          <input
+            className="input-field w-64"
+            placeholder="Tìm kiếm..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            + Tạo phiên mới
+          </button>
+        </div>
       </div>
 
       {isLoading && <p className="text-slate-400 text-sm">Đang tải...</p>}
@@ -88,6 +142,13 @@ export default function Sessions({ onSelectSession }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {showModal && (
+        <CreateSessionModal 
+          onClose={() => setShowModal(false)} 
+          onCreated={onSelectSession} 
+        />
       )}
     </div>
   )

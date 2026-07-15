@@ -161,16 +161,14 @@ class ThreadedCapture:
     def _open(self) -> Optional[cv2.VideoCapture]:
         """Open the video source with optimised settings."""
         source = self.source
-        if isinstance(source, str) and source.lower().startswith("rtsp://"):
-            # Force TCP transport for Tailscale/NAT stability
-            source_with_opts = source
-            cap = cv2.VideoCapture(source_with_opts, cv2.CAP_FFMPEG)
+        if isinstance(self.source, str) and self.source.lower().startswith("rtsp://"):
+            # Use FFMPEG backend for RTSP with UDP to prevent MSMF errors and connection hangs
+            import os
+            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;udp"
+            cap = cv2.VideoCapture(self.source, cv2.CAP_FFMPEG)
             cap.set(cv2.CAP_PROP_BUFFERSIZE, self.cfg.cv2_buffer_size)
-            # Set RTSP transport to TCP
-            cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
-            cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, int(self.cfg.read_timeout * 1000))
         else:
-            cap = cv2.VideoCapture(source)
+            cap = cv2.VideoCapture(self.source)
             cap.set(cv2.CAP_PROP_BUFFERSIZE, self.cfg.cv2_buffer_size)
 
         if not cap.isOpened():
