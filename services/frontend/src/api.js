@@ -49,6 +49,13 @@ export const api = {
     (id) => MOCK_STUDENTS.find(s => s.student_id === id) ?? null,
   ),
   enrollStudent: (data) => http.post('/students', data).then(r => r.data),
+  deleteStudent: (id) => http.delete(`/students/${id}`),
+
+  // Session lifecycle — no mock fallback (must reach real backend)
+  startSession: (className) =>
+    http.post('/sessions/start', { class_name: className }).then(r => r.data),
+  endSession: (id) =>
+    http.post(`/sessions/${id}/end`).then(r => r.data),
 
   generateReport: withMock(
     (sessionId, provider, language) =>
