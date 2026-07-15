@@ -1,4 +1,4 @@
-model: weights/behavior_yolo26n.pt
+model: best.pt
 device: auto
 input_size: 640
 confidence_threshold: 0.30
