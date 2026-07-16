@@ -24,8 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--detector", default="yolo11n", choices=["yolo11n", "yolo11s","yolo26n","yolo26s"])
     parser.add_argument(
         "--behavior-model",
-        default="weights/behavior_yolo26n.pt",
-        help="Path to custom YOLO weights trained on student behavior classes.",
+        default=None,
+        help="Path to custom YOLO weights. If not set, reads from config (data/models/best.pt).",
     )
     parser.add_argument(
         "--behavior-window",
@@ -139,6 +139,8 @@ class VisionPipeline:
             [track.track_id for track in tracks],
         )
 
+
+
         objects = self._object_detector.detect(frame, persons=tracks) if self._object_detector else []
         objects_by_track: dict[int, list[Any]] = {track.track_id: [] for track in tracks}
         for detected_object in objects:
@@ -156,6 +158,11 @@ class VisionPipeline:
             if phone_scores:
                 behavior_overrides[track_id] = ("using_phone", max(phone_scores))
 
+        mock_state = getattr(self, "mock_state", None)
+        if mock_state:
+            for track in tracks:
+                behavior_overrides[track.track_id] = (mock_state, 0.99)
+
         _, frame_behaviors, behavior_results = self._behavior_detector.update(
             frame,
             frame_index,
@@ -169,6 +176,7 @@ class VisionPipeline:
             frame_index=frame_index,
             timestamp=timestamp,
         )
+        print(f"[DEBUG] Tracks: {len(tracks)}, Behavior Results: {behavior_results}")
         final_behavior = _build_final_behavior(
             behavior_results,
             seat_results,
@@ -195,6 +203,34 @@ class VisionPipeline:
 
     def end_class(self) -> None:
         self._seat_monitor.end_session()
+
+    def _recognize_faces(
+        self,
+        frame: np.ndarray,
+        faces_by_track: dict[int, Any],
+        active_track_ids: Sequence[int],
+    ) -> dict[int, Any]:
+        if getattr(self, "_recognizer", None) is None:
+            return {}
+
+        self._recognizer.update_active_tracks(active_track_ids)
+        recognition_by_track: dict[int, Any] = {}
+        for track_id, face in faces_by_track.items():
+            if len(face.landmarks) == 5:
+                recognition_by_track[track_id] = self._recognizer.recognize(
+                    frame,
+                    landmarks=face.landmarks,
+                    track_id=track_id,
+                )
+                continue
+
+            crop, _ = _crop(frame, _expand_bbox(face.bbox, 0.2))
+            if crop.size:
+                recognition_by_track[track_id] = self._recognizer.recognize(
+                    crop,
+                    track_id=track_id,
+                )
+        return recognition_by_track
 
     def reset(self) -> None:
         self._tracker.reset()
@@ -225,33 +261,7 @@ class VisionPipeline:
             faces_by_track[track.track_id] = face
         return faces_by_track
 
-    def _recognize_faces(
-        self,
-        frame: np.ndarray,
-        faces_by_track: dict[int, Any],
-        active_track_ids: Sequence[int],
-    ) -> dict[int, Any]:
-        if self._recognizer is None:
-            return {}
 
-        self._recognizer.update_active_tracks(active_track_ids)
-        recognition_by_track: dict[int, Any] = {}
-        for track_id, face in faces_by_track.items():
-            if len(face.landmarks) == 5:
-                recognition_by_track[track_id] = self._recognizer.recognize(
-                    frame,
-                    landmarks=face.landmarks,
-                    track_id=track_id,
-                )
-                continue
-
-            crop, _ = _crop(frame, _expand_bbox(face.bbox, 0.2))
-            if crop.size:
-                recognition_by_track[track_id] = self._recognizer.recognize(
-                    crop,
-                    track_id=track_id,
-                )
-        return recognition_by_track
 
 
 def _build_final_behavior(
@@ -321,15 +331,15 @@ def annotate_frame(frame: np.ndarray, result: dict[str, Any]) -> np.ndarray:
             label_parts.append(str(final["state"]))
             label_parts.append(f"{float(final['confidence']):.2f}")
             color = _state_color(str(final["state"]))
-        cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
+        cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 1)
         cv2.putText(
             annotated,
             " | ".join(label_parts),
             (x1, max(20, y1 - 8)),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.55,
+            0.45,
             color,
-            2,
+            1,
             cv2.LINE_AA,
         )
     return annotated

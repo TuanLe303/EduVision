@@ -13,6 +13,8 @@ from __future__ import annotations
 import json
 import shutil
 import traceback
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -26,6 +28,8 @@ from fastapi import (
     Request,
     UploadFile,
     status,
+    WebSocket,
+    WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -43,7 +47,18 @@ from services.backend_api.models import (
     StartSessionRequest,
     StudentOut,
     SummaryOut,
+    StartPipelineRequest,
+    PipelineStatusOut,
 )
+
+# ---------------------------------------------------------------------------
+# Global Pipeline State
+# ---------------------------------------------------------------------------
+class PipelineManager:
+    process: Optional[subprocess.Popen] = None
+    current_source: Optional[str] = None
+
+pipeline_mgr = PipelineManager()
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -67,6 +82,31 @@ app.add_middleware(
 _AVATARS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/api/avatars", StaticFiles(directory=str(_AVATARS_DIR)), name="avatars")
 
+
+# ---------------------------------------------------------------------------
+# WebSocket Manager
+# ---------------------------------------------------------------------------
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        for connection in list(self.active_connections):
+            try:
+                await connection.send_json(message)
+            except Exception:
+                pass
+
+manager = ConnectionManager()
 
 # ---------------------------------------------------------------------------
 # Dependency
@@ -222,7 +262,41 @@ async def push_events(
     """
     _require_session(db, session_id)
     inserted = db.log_events_bulk(session_id, body.events)
+    
+    # Broadcast new events to WebSocket clients
+    for ev in body.events:
+        import asyncio
+        asyncio.create_task(manager.broadcast({
+            "type": "behavior_event",
+            "student_id": ev.student_id,
+            "track_id": ev.track_id,
+            "state": ev.state,
+            "confidence": ev.confidence,
+            "ts": ev.ts
+        }))
+        
     return {"inserted": inserted}
+
+
+@app.post("/api/ws/frame")
+async def push_frame(payload: dict):
+    """
+    Internal endpoint called by the vision pipeline to broadcast 
+    the current tracks and frame info to dashboard websocket clients.
+    """
+    # payload should be {"type": "frame", "tracks": [...], "frame_w": ..., "frame_h": ..., "session": {...}}
+    await manager.broadcast(payload)
+    return {"status": "ok"}
+
+
+@app.websocket("/ws/events")
+async def websocket_events(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SummaryOut)
@@ -272,6 +346,95 @@ async def get_report(session_id: int, db: Database = Depends(db_dep)):
         raise HTTPException(status_code=404, detail="Report not found")
     return ReportOut(**report)
 
+
+@app.delete("/api/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session(session_id: int, db: Database = Depends(db_dep)):
+    if not db.delete_session(session_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+    report_file = _REPORTS_DIR / f"report_{session_id}.json"
+    if report_file.exists():
+        report_file.unlink()
+
+# ---------------------------------------------------------------------------
+# Attendance / Events
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Pipeline Management (/api/pipeline)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/pipeline/status", response_model=PipelineStatusOut)
+async def get_pipeline_status():
+    is_running = False
+    pid = None
+    if pipeline_mgr.process is not None:
+        if pipeline_mgr.process.poll() is None:
+            is_running = True
+            pid = pipeline_mgr.process.pid
+        else:
+            pipeline_mgr.process = None
+            pipeline_mgr.current_source = None
+            
+    return PipelineStatusOut(
+        is_running=is_running,
+        source=pipeline_mgr.current_source,
+        pid=pid
+    )
+
+@app.post("/api/upload_video")
+async def upload_video(file: UploadFile = File(...)):
+    uploads_dir = Path(__file__).resolve().parents[2] / "data" / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    file_path = uploads_dir / file.filename
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {"source": str(file_path)}
+
+@app.post("/api/pipeline/start/{session_id}", response_model=PipelineStatusOut)
+async def start_pipeline(session_id: int, body: StartPipelineRequest, db: Database = Depends(db_dep)):
+    _require_session(db, session_id)
+    
+    # Check if already running
+    if pipeline_mgr.process is not None and pipeline_mgr.process.poll() is None:
+        raise HTTPException(status_code=400, detail="Pipeline is already running")
+        
+    python_exe = sys.executable
+    cmd = [
+        python_exe, "-m", "services.video_connection.realtime_demo",
+        "--session-id", str(session_id),
+        "--source", body.source,
+        "--target-fps", str(body.target_fps),
+        "--show",  # Pop up OpenCV window for demo
+    ]
+    
+    try:
+        pipeline_mgr.process = subprocess.Popen(
+            cmd,
+            cwd=str(Path(__file__).resolve().parents[2]) # Root of EduVision
+        )
+        pipeline_mgr.current_source = body.source
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start pipeline: {str(e)}")
+        
+    return PipelineStatusOut(
+        is_running=True,
+        source=pipeline_mgr.current_source,
+        pid=pipeline_mgr.process.pid
+    )
+
+@app.post("/api/pipeline/stop", response_model=PipelineStatusOut)
+async def stop_pipeline():
+    if pipeline_mgr.process is not None:
+        if pipeline_mgr.process.poll() is None:
+            pipeline_mgr.process.terminate()
+            try:
+                pipeline_mgr.process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                pipeline_mgr.process.kill()
+        pipeline_mgr.process = None
+        pipeline_mgr.current_source = None
+        
+    return PipelineStatusOut(is_running=False)
 
 # ---------------------------------------------------------------------------
 # Internal helpers

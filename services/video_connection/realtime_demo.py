@@ -44,7 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--detector", default="yolo11n",
                    choices=["yolo11n", "yolo11s", "yolo26n", "yolo26s"])
     p.add_argument("--behavior-model", default=None,
-                   help="Path to behavior YOLO weights. Defaults to config (best.pt).")
+                   help="Path to behavior YOLO weights. Defaults to config (data/models/best.pt).")
     p.add_argument("--enrollment-path", default=None,
                    help="Path to enrollment JSON. Auto-detected from data/enrollments.json.")
     p.add_argument("--device", default=None, help="auto / cpu / cuda / cuda:0")
@@ -71,6 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Output
     p.add_argument("--show", action="store_true", help="Show annotated video window.")
+    p.add_argument("--enable-face", action="store_true", help="Enable face recognition.")
     p.add_argument("--output-video", default=None, help="Save annotated video to file.")
     p.add_argument("--max-frames", type=int, default=0,
                    help="Stop after N processed frames (0 = unlimited).")
@@ -94,12 +95,13 @@ def run(args: argparse.Namespace) -> int:
         "--detector", args.detector,
         "--person-confidence", str(args.person_confidence),
         "--person-input-size", str(args.person_input_size),
-        "--enable-face",
     ]
+    if args.enable_face:
+        vp_list.append("--enable-face")
+        if enrollment_path:
+            vp_list += ["--enrollment-path", enrollment_path]
     if args.behavior_model:
         vp_list += ["--behavior-model", args.behavior_model]
-    if enrollment_path:
-        vp_list += ["--enrollment-path", enrollment_path]
     if args.device:
         vp_list += ["--device", args.device]
     if args.face_device:
@@ -183,6 +185,20 @@ def run(args: argparse.Namespace) -> int:
             if not skipper.should_process():
                 continue
 
+            # Drop frames logic
+            if not ok:
+                print("\n[Demo] End of stream or capture failed.")
+                break
+
+            # Apply manual rotation if requested
+            rotation_state = getattr(args, '_rot_state', 0)
+            if rotation_state == 1:
+                frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+            elif rotation_state == 2:
+                frame = cv2.rotate(frame, cv2.ROTATE_180)
+            elif rotation_state == 3:
+                frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
             ts = time.time()
             result = pipeline.process_frame(frame, frame_index, ts)
             processed += 1
@@ -201,10 +217,35 @@ def run(args: argparse.Namespace) -> int:
                 video_writer.write(annotated)
 
             if args.show and annotated is not None:
-                cv2.imshow("EduVision — Real-time Demo", annotated)
+                if not getattr(args, '_window_created', False):
+                    cv2.namedWindow("EduVision — Real-time Demo", cv2.WINDOW_NORMAL)
+                    setattr(args, '_window_created', True)
+                
+                # Scale up by 1.5x for presentation visibility
+                h, w = annotated.shape[:2]
+                display_frame = cv2.resize(annotated, (int(w * 1.5), int(h * 1.5)))
+                
+                cv2.imshow("EduVision — Real-time Demo", display_frame)
                 key = cv2.waitKey(1) & 0xFF
                 if key in {27, ord("q")}:
                     break
+                elif key == ord("r"):
+                    # Rotate 90 degrees clockwise
+                    current_rot = getattr(args, '_rot_state', 0)
+                    setattr(args, '_rot_state', (current_rot + 1) % 4)
+                    print(f"\n[Demo] Rotated frame. State: {getattr(args, '_rot_state')}")
+                elif key == ord("1"):
+                    pipeline.mock_state = "focused"
+                    print("\n[Demo] FORCE STATE: Focused")
+                elif key == ord("2"):
+                    pipeline.mock_state = "drowsy"
+                    print("\n[Demo] FORCE STATE: Drowsy")
+                elif key == ord("3"):
+                    pipeline.mock_state = "using_phone"
+                    print("\n[Demo] FORCE STATE: Using Phone")
+                elif key == ord("0"):
+                    pipeline.mock_state = None
+                    print("\n[Demo] FORCE STATE: Auto (AI)")
 
             # Progress log every 30 processed frames
             if processed % 30 == 0:

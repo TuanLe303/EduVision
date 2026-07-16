@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import threading
 import time
 from typing import Any, Optional
 
@@ -53,7 +54,34 @@ class EventPusher:
         Call this with the dict returned by VisionPipeline.process_frame().
         final_behavior entries are extracted and buffered.
         """
-        for item in result.get("final_behavior", []):
+        tracks = result.get("tracks", [])
+        final_behavior = result.get("final_behavior", [])
+        
+        if tracks:
+            def _push_tracks():
+                behavior_map = {item.get("track_id"): item for item in final_behavior}
+                merged_tracks = []
+                for t in tracks:
+                    tid = t.get("track_id")
+                    b = behavior_map.get(tid, {})
+                    merged_tracks.append({
+                        "track_id": tid,
+                        "bbox": t.get("bbox"),
+                        "state": b.get("state", "unknown"),
+                        "name": b.get("name"),
+                        "student_id": b.get("student_id")
+                    })
+                payload = {
+                    "type": "frame",
+                    "tracks": merged_tracks,
+                }
+                try:
+                    requests.post(f"{self._url}/api/ws/frame", json=payload, timeout=1.0)
+                except Exception:
+                    pass
+            threading.Thread(target=_push_tracks, daemon=True).start()
+
+        for item in final_behavior:
             self._buffer.append(
                 {
                     "student_id": item.get("student_id"),

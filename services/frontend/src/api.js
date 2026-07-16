@@ -56,6 +56,21 @@ export const api = {
     http.post('/sessions/start', { class_name: className }).then(r => r.data),
   endSession: (id) =>
     http.post(`/sessions/${id}/end`).then(r => r.data),
+  deleteSession: (id) =>
+    http.delete(`/sessions/${id}`),
+
+  // Pipeline Management
+  uploadVideo: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return http.post('/upload_video', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(r => r.data)
+  },
+  getPipelineStatus: () => http.get('/pipeline/status').then(r => r.data),
+  startPipeline: (sessionId, source, targetFps) => 
+    http.post(`/pipeline/start/${sessionId}`, { source, target_fps: targetFps }).then(r => r.data),
+  stopPipeline: () => http.post('/pipeline/stop').then(r => r.data),
 
   generateReport: withMock(
     (sessionId, provider, language) =>

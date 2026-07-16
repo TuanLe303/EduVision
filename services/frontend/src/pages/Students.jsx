@@ -87,6 +87,7 @@ function EnrollModal({ onClose }) {
 }
 
 export default function Students() {
+  const qc = useQueryClient()
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -94,6 +95,17 @@ export default function Students() {
     queryKey: ['students'],
     queryFn: () => api.getStudents(),
   })
+
+  const deleteStudent = useMutation({
+    mutationFn: (id) => api.deleteStudent(id),
+    onSuccess: () => qc.invalidateQueries(['students']),
+  })
+
+  const handleDelete = (id, name) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa sinh viên ${name}?`)) {
+      deleteStudent.mutate(id)
+    }
+  }
 
   const filtered = students.filter(s =>
     !search ||
@@ -131,8 +143,15 @@ export default function Students() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {filtered.map(s => (
-          <div key={s.student_id ?? s.id} className="bg-slate-800/60 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-slate-800 transition-colors">
-            <div className="w-16 h-16 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center">
+          <div key={s.student_id ?? s.id} className="group relative bg-slate-800/60 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-slate-800 transition-colors">
+            <button 
+              onClick={() => handleDelete(s.student_id, s.name)}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-500/40"
+              title="Xóa sinh viên"
+            >
+              ✕
+            </button>
+            <div className="w-16 h-16 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center border-2 border-transparent group-hover:border-slate-600 transition-colors">
               {s.avatar_url
                 ? <img src={s.avatar_url} alt={s.name} className="w-full h-full object-cover" />
                 : <span className="text-2xl">{s.name?.[0] ?? '?'}</span>

@@ -82,6 +82,19 @@ class SessionOut(BaseModel):
 class StartSessionRequest(BaseModel):
     class_name: str = Field(..., min_length=1)
 
+# ---------------------------------------------------------------------------
+# Pipeline Stream Management
+# ---------------------------------------------------------------------------
+
+class StartPipelineRequest(BaseModel):
+    source: str = Field(default="0", description="RTSP URL or Camera Index")
+    target_fps: float = Field(default=8.0, description="Target processing FPS")
+
+class PipelineStatusOut(BaseModel):
+    is_running: bool
+    source: Optional[str] = None
+    pid: Optional[int] = None
+
 
 # ---------------------------------------------------------------------------
 # Attendance

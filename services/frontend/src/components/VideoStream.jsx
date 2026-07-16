@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCamera } from '../hooks/useCamera'
 import { BEHAVIOR_META, GAZE_ARROW, OBJECT_EMOJI } from '../constants'
+import { api } from '../api'
 
 function drawTracks(canvas, video, tracks) {
   const ctx = canvas.getContext('2d')
@@ -28,11 +30,43 @@ function drawTracks(canvas, video, tracks) {
   })
 }
 
-export default function VideoStream({ tracks = [], frameW, frameH, wsStatus }) {
+export default function VideoStream({ tracks = [], frameW, frameH, wsStatus, session }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
+  const qc = useQueryClient()
   const { status: camStatus, error: camError, start, stop } = useCamera()
-  const [useWs, setUseWs] = useState(false)
+  
+  // Pipeline form states
+  const [mode, setMode] = useState('browser') // 'browser' | 'rtsp' | 'webcam' | 'mp4'
+  const [rtspUrl, setRtspUrl] = useState('rtsp://100.86.84.22:8554/live.sdp')
+  const [mp4File, setMp4File] = useState(null)
+  const [targetFps, setTargetFps] = useState(8)
+
+  // Pipeline API
+  const { data: pipelineStatus } = useQuery({
+    queryKey: ['pipeline'],
+    queryFn: () => api.getPipelineStatus(),
+    refetchInterval: 3000,
+  })
+
+  const startPipeline = useMutation({
+    mutationFn: async () => {
+      let source = '0'
+      if (mode === 'rtsp') source = rtspUrl
+      if (mode === 'mp4') {
+        if (!mp4File) throw new Error("Vui lòng chọn file MP4 trước khi bật AI!")
+        const res = await api.uploadVideo(mp4File)
+        source = res.source
+      }
+      return api.startPipeline(session?.id ?? 1, source, targetFps)
+    },
+    onSuccess: () => qc.invalidateQueries(['pipeline'])
+  })
+
+  const stopPipeline = useMutation({
+    mutationFn: () => api.stopPipeline(),
+    onSuccess: () => qc.invalidateQueries(['pipeline'])
+  })
 
   // draw bbox overlay on every tracks change
   useEffect(() => {
@@ -42,40 +76,134 @@ export default function VideoStream({ tracks = [], frameW, frameH, wsStatus }) {
     drawTracks(canvas, video, tracks)
   }, [tracks])
 
-  const handleToggle = async () => {
+  const handleToggleBrowserCam = async () => {
     const video = videoRef.current
     if (camStatus === 'on') { stop(video) }
     else                    { await start(video) }
   }
 
+  const handleTogglePipeline = () => {
+    if (pipelineStatus?.is_running) {
+      stopPipeline.mutate()
+    } else {
+      if (!session) {
+        alert("Vui lòng tạo hoặc chọn một phiên học đang diễn ra trước khi bật AI!")
+        return
+      }
+      startPipeline.mutate()
+    }
+  }
+
   const camActive = camStatus === 'on'
+  const isPipelineRunning = pipelineStatus?.is_running
 
   return (
     <div className="card flex flex-col gap-3">
       {/* header bar */}
-      <div className="flex items-center justify-between">
-        <h2 className="sec-title mb-0">Live Monitor</h2>
-        <div className="flex items-center gap-2">
-          {wsStatus && (
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              wsStatus === 'connected' ? 'bg-green-900 text-green-300' :
-              wsStatus === 'connecting' ? 'bg-yellow-900 text-yellow-300' :
-              'bg-slate-700 text-slate-400'
-            }`}>
-              WS {wsStatus}
-            </span>
-          )}
-          <button
-            onClick={handleToggle}
-            className={camActive ? 'btn-danger' : 'btn-primary'}
-          >
-            {camStatus === 'requesting' ? 'Đang kết nối…' : camActive ? 'Dừng camera' : 'Bật camera'}
-          </button>
+      <div className="flex flex-col gap-3 p-3 bg-slate-900 border-b border-slate-800 rounded-t-xl">
+        <div className="flex items-center justify-between">
+          <h2 className="sec-title mb-0">Luồng Video & AI</h2>
+          <div className="flex items-center gap-2 text-xs">
+            {wsStatus && (
+              <span className={`px-2 py-0.5 rounded-full ${
+                wsStatus === 'connected' ? 'bg-green-900 text-green-300' :
+                wsStatus === 'connecting' ? 'bg-yellow-900 text-yellow-300' :
+                'bg-slate-700 text-slate-400'
+              }`}>
+                WS {wsStatus}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap items-end gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Nguồn Camera</label>
+            <select 
+              value={mode} 
+              onChange={e => setMode(e.target.value)}
+              className="input-field text-xs py-1"
+              disabled={isPipelineRunning}
+            >
+              <option value="browser">Camera Máy Tính (Trình duyệt)</option>
+              <option value="webcam">Camera Máy Tính (Chạy AI)</option>
+              <option value="rtsp">Link RTSP Điện Thoại (Chạy AI)</option>
+              <option value="mp4">Upload Video MP4 (Chạy AI)</option>
+            </select>
+          </div>
+
+          {mode === 'rtsp' && (
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs text-slate-400 mb-1">Link RTSP</label>
+              <input 
+                type="text" 
+                value={rtspUrl}
+                onChange={e => setRtspUrl(e.target.value)}
+                className="input-field w-full text-xs py-1"
+                placeholder="rtsp://100.x.x.x:8554/live.sdp"
+                disabled={isPipelineRunning}
+              />
+            </div>
+          )}
+
+          {mode === 'mp4' && (
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs text-slate-400 mb-1">Chọn file MP4</label>
+              <input 
+                type="file" 
+                accept="video/mp4"
+                onChange={e => setMp4File(e.target.files[0])}
+                className="input-field w-full text-xs py-1 text-slate-300"
+                disabled={isPipelineRunning}
+              />
+            </div>
+          )}
+
+          {mode !== 'browser' && (
+            <div className="w-32">
+              <label className="block text-xs text-slate-400 mb-1">Target FPS: {targetFps}</label>
+              <input 
+                type="range" 
+                min="1" max="30" 
+                value={targetFps}
+                onChange={e => setTargetFps(parseInt(e.target.value))}
+                className="w-full accent-indigo-500"
+                disabled={isPipelineRunning}
+              />
+            </div>
+          )}
+
+          <div>
+            {mode === 'browser' ? (
+              <button
+                onClick={handleToggleBrowserCam}
+                className={camActive ? 'btn-danger' : 'btn-primary'}
+              >
+                {camStatus === 'requesting' ? 'Đang kết nối…' : camActive ? 'Dừng Camera' : 'Bật Camera'}
+              </button>
+            ) : (
+              <button
+                onClick={handleTogglePipeline}
+                className={isPipelineRunning ? 'btn-danger' : 'btn-primary'}
+                disabled={startPipeline.isPending || stopPipeline.isPending}
+              >
+                {startPipeline.isPending ? 'Đang bật AI...' : 
+                 stopPipeline.isPending ? 'Đang tắt AI...' :
+                 isPipelineRunning ? 'Dừng Pipeline AI' : 'Bật Pipeline AI'}
+              </button>
+            )}
+          </div>
+        </div>
+        {isPipelineRunning && (
+          <p className="text-xs text-indigo-400 animate-pulse mt-1">
+            Pipeline AI đang chạy ngầm trên backend. Cửa sổ OpenCV sẽ hiện lên để bạn theo dõi.
+          </p>
+        )}
       </div>
 
       {/* video + canvas stack */}
-      <div className="relative bg-slate-900 rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+      <div className="relative bg-slate-900 overflow-hidden rounded-b-xl" style={{ aspectRatio: '16/9' }}>
         <video
           ref={videoRef}
           autoPlay

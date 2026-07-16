@@ -1,4 +1,4 @@
-model: best.pt
+model: data/models/best.pt
 device: auto
 input_size: 640
 confidence_threshold: 0.30

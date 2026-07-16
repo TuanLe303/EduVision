@@ -17,6 +17,9 @@ slide.md
 
 # Raw video data & downloaded datasets (too large for git)
 Data Collection/
+*.mp4
+*.avi
+*.mkv
 
 # Python cache
 __pycache__/
