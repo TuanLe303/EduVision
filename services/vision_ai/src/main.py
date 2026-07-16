@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--behavior-model",
         default=None,
-        help="Path to custom YOLO weights. If not set, reads from config (best.pt).",
+        help="Path to custom YOLO weights. If not set, reads from config (data/models/best.pt).",
     )
     parser.add_argument(
         "--behavior-window",

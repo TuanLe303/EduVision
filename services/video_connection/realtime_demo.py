@@ -44,7 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--detector", default="yolo11n",
                    choices=["yolo11n", "yolo11s", "yolo26n", "yolo26s"])
     p.add_argument("--behavior-model", default=None,
-                   help="Path to behavior YOLO weights. Defaults to config (best.pt).")
+                   help="Path to behavior YOLO weights. Defaults to config (data/models/best.pt).")
     p.add_argument("--enrollment-path", default=None,
                    help="Path to enrollment JSON. Auto-detected from data/enrollments.json.")
     p.add_argument("--device", default=None, help="auto / cpu / cuda / cuda:0")
