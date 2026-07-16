@@ -2,7 +2,7 @@
 ev/
 .venv/
 venv/
-
+slide.md
 # Model weight files
 *.pth
 *.pt

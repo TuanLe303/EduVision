@@ -128,11 +128,17 @@ A custom YOLO detection model predicts one visual behavior box per visible stude
 - **LLM Report Generation**: Google Gemini or OpenAI GPT
 - **Frontend**: React (Vite) + TailwindCSS
 
----
+```text
+outputs/streamlit/
+```
 
 ## 6. Installation & Running the System
 
-### Prerequisites
+- Detector: `yolo26n` or `yolo11n`
+- Tracker: `bytetrack_classroom`
+- Device: `cpu`
+- Skip object detector: enabled
+- Max frames: 30 to 100
 
 - Python 3.10 or higher
 - Git
@@ -231,6 +237,35 @@ EduVision/
 
 Full API documentation (Swagger UI) is available at `http://localhost:8000/docs` when the backend is running.
 
----
+```text
+EduVision/
+  configs/                 Service configuration files.
+  data/                    Local runtime data, ignored by git.
+  outputs/                 Generated JSONL, summaries, videos, metrics.
+  scripts/                 Utility scripts such as auto enrollment.
+  services/
+    backend_api/           FastAPI + SQLite backend.
+    frontend/              React/Vite dashboard.
+    report_generator/      JSONL aggregation and LLM report generation.
+    streamlit_demo.py      Local E2E harness.
+    video_connection/      Real-time capture helpers.
+    vision_ai/             Detection, tracking, behavior, face, and seat logic.
+  tests/                   Pytest suite.
+  tools/
+    evaluate/              E2E evaluation and benchmark tools.
+  weights/                 Local model weights.
+  pyproject.toml           uv project metadata and dependencies.
+  requirements.txt         pip fallback dependencies.
+```
 
-*EduVision — Intelligent Classroom Monitoring, powered by Computer Vision and AI.*
+## Notes And Limitations
+
+- The production database described in earlier drafts is not wired in here;
+  the active backend uses SQLite.
+- The Streamlit harness stops at pre-report summary generation. Use
+  `services.report_generator.main` to call an LLM from a JSONL file.
+- Face recognition is optional and heavier than the default behavior-only path.
+- Real-time RTSP sources may need lower input size, frame skipping, or the
+  threaded capture helpers in `services/video_connection`.
+- Generated runtime data and most model weights are intentionally ignored by
+  git.
