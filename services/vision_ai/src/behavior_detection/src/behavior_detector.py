@@ -79,10 +79,10 @@ class BehaviorDetector:
     ) -> None:
         cfg = {**_load_config(), **(config or {})}
         self._model_path = model_path or cfg.get("model", "best.pt")
-        self._conf = float(cfg.get("confidence_threshold", 0.30))
+        self._conf = float(cfg.get("confidence_threshold", 0.15))
         self._iou = float(cfg.get("iou_threshold", 0.50))
         self._input_size = int(cfg.get("input_size", 640))
-        self._association_min_score = float(cfg.get("association_min_score", 0.35))
+        self._association_min_score = float(cfg.get("association_min_score", 0.15))
         selected_device = device if device is not None else cfg.get("device", "auto")
         self._device = None if selected_device == "auto" else selected_device
         configured_window = int(cfg.get("window_size", 12))
@@ -186,10 +186,13 @@ class BehaviorDetector:
                         confidence=float(confidence),
                     )
                 )
+                
+        print(f"[DEBUG-AI] raw_detections: {len(raw_detections)}")
 
         detections = _associate_behaviors(
             tracks, raw_detections, min_score=self._association_min_score
         )
+        print(f"[DEBUG-AI] associated detections: {len(detections)}")
         detections_by_track = {item.track_id: item for item in detections}
         tracks_by_id = {item.track_id: item for item in tracks}
         for raw_track_id, (raw_state, confidence) in (state_overrides or {}).items():

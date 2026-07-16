@@ -94,6 +94,11 @@ class Database:
         with self._lock, conn:
             yield conn
 
+    def delete_session(self, session_id: int) -> bool:
+        with self._tx() as conn:
+            cur = conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+        return bool(cur.rowcount)
+
     # ------------------------------------------------------------------
     # Schema
     # ------------------------------------------------------------------

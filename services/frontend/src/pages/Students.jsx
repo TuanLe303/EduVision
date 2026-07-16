@@ -145,7 +145,7 @@ export default function Students() {
         {filtered.map(s => (
           <div key={s.student_id ?? s.id} className="group relative bg-slate-800/60 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-slate-800 transition-colors">
             <button 
-              onClick={() => handleDelete(s.id, s.name)}
+              onClick={() => handleDelete(s.student_id, s.name)}
               className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-500/40"
               title="Xóa sinh viên"
             >

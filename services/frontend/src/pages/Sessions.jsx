@@ -63,6 +63,19 @@ export default function Sessions({ onSelectSession }) {
     s.id?.toString().includes(search)
   )
 
+  const qc = useQueryClient()
+  const deleteSession = useMutation({
+    mutationFn: (id) => api.deleteSession(id),
+    onSuccess: () => qc.invalidateQueries(['sessions'])
+  })
+
+  const handleDelete = (e, id) => {
+    e.stopPropagation()
+    if (confirm(`Bạn có chắc chắn muốn xóa phiên học #${id} và toàn bộ báo cáo, dữ liệu đi kèm không?`)) {
+      deleteSession.mutate(id)
+    }
+  }
+
   return (
     <div className="card flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -99,6 +112,7 @@ export default function Sessions({ onSelectSession }) {
                 <th className="pb-2 text-slate-400 font-medium">Sinh viên</th>
                 <th className="pb-2 text-slate-400 font-medium">Chú ý</th>
                 <th className="pb-2 text-slate-400 font-medium">Báo cáo</th>
+                <th className="pb-2 text-slate-400 font-medium text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -136,6 +150,17 @@ export default function Sessions({ onSelectSession }) {
                     ) : (
                       <span className="text-xs text-slate-500">Chưa có</span>
                     )}
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <button
+                      onClick={(e) => handleDelete(e, s.id)}
+                      className="text-slate-500 hover:text-red-400 p-1 rounded transition-colors"
+                      title="Xóa phiên học"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               ))}

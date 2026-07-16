@@ -37,8 +37,9 @@ export default function VideoStream({ tracks = [], frameW, frameH, wsStatus, ses
   const { status: camStatus, error: camError, start, stop } = useCamera()
   
   // Pipeline form states
-  const [mode, setMode] = useState('browser') // 'browser' | 'rtsp' | 'webcam'
+  const [mode, setMode] = useState('browser') // 'browser' | 'rtsp' | 'webcam' | 'mp4'
   const [rtspUrl, setRtspUrl] = useState('rtsp://100.86.84.22:8554/live.sdp')
+  const [mp4File, setMp4File] = useState(null)
   const [targetFps, setTargetFps] = useState(8)
 
   // Pipeline API
@@ -49,8 +50,14 @@ export default function VideoStream({ tracks = [], frameW, frameH, wsStatus, ses
   })
 
   const startPipeline = useMutation({
-    mutationFn: () => {
-      const source = mode === 'rtsp' ? rtspUrl : '0'
+    mutationFn: async () => {
+      let source = '0'
+      if (mode === 'rtsp') source = rtspUrl
+      if (mode === 'mp4') {
+        if (!mp4File) throw new Error("Vui lòng chọn file MP4 trước khi bật AI!")
+        const res = await api.uploadVideo(mp4File)
+        source = res.source
+      }
       return api.startPipeline(session?.id ?? 1, source, targetFps)
     },
     onSuccess: () => qc.invalidateQueries(['pipeline'])
@@ -122,6 +129,7 @@ export default function VideoStream({ tracks = [], frameW, frameH, wsStatus, ses
               <option value="browser">Camera Máy Tính (Trình duyệt)</option>
               <option value="webcam">Camera Máy Tính (Chạy AI)</option>
               <option value="rtsp">Link RTSP Điện Thoại (Chạy AI)</option>
+              <option value="mp4">Upload Video MP4 (Chạy AI)</option>
             </select>
           </div>
 
@@ -134,6 +142,19 @@ export default function VideoStream({ tracks = [], frameW, frameH, wsStatus, ses
                 onChange={e => setRtspUrl(e.target.value)}
                 className="input-field w-full text-xs py-1"
                 placeholder="rtsp://100.x.x.x:8554/live.sdp"
+                disabled={isPipelineRunning}
+              />
+            </div>
+          )}
+
+          {mode === 'mp4' && (
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs text-slate-400 mb-1">Chọn file MP4</label>
+              <input 
+                type="file" 
+                accept="video/mp4"
+                onChange={e => setMp4File(e.target.files[0])}
+                className="input-field w-full text-xs py-1 text-slate-300"
                 disabled={isPipelineRunning}
               />
             </div>
